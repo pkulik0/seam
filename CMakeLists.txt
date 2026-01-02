@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.20)
+project(seam CXX)
+
+set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+file(GLOB_RECURSE SEAM_SOURCES "src/*.cxx")
+add_executable(seam ${SEAM_SOURCES})
