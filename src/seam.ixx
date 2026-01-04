@@ -10,7 +10,8 @@ export module seam;
 import seam.scanner;
 import seam.common;
 import seam.parser;
-import seam.visitor;
+import seam.ast;
+import seam.interpreter;
 
 export namespace seam {
 
@@ -49,16 +50,28 @@ private:
   std::string m_prompt = ">> ";
   bool m_had_error = false;
 
-  void run(const std::string_view source) {
-    scanner::Scanner scanner{source};
-    const auto tokens = scanner.scan_tokens();
+  interpreter::Interpreter m_interpreter;
+  ast::AstPrinter m_ast_printer;
 
-    parser::Parser parser{tokens};
+  void run(const std::string_view source) {
     try {
-      const auto expression = parser.parse();    
-      std::println("{}", visitor::AstPrinter{}.print(expression));
+      scanner::Scanner scanner{source};
+      const auto tokens = scanner.scan_tokens();
+
+      parser::Parser parser{tokens};
+      const auto program = parser.parse();
+      std::println("\t{}", m_ast_printer.print(program));
+
+      m_interpreter.run(program);
+    } catch (const scanner::Error &e) {
+      std::println("{}", e.what());
+      m_had_error = true;
     } catch (const parser::Error &e) {
       std::println("{}", e.what());
+      m_had_error = true;
+    } catch (const interpreter::RuntimeError &e) {
+      std::println("{}", e.what());
+      m_had_error = true;
     }
   }
 

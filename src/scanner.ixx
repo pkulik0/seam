@@ -245,8 +245,8 @@ private:
 
     advance(); // closing quote
 
-    const std::string_view value =
-        m_source.substr(m_start + 1, m_current - m_start - 2);
+    const std::string value =
+        std::string(m_source.substr(m_start + 1, m_current - m_start - 2));
     add_token(token::Type::STRING, value);
   }
 
