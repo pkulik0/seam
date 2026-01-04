@@ -85,7 +85,7 @@ private:
                           literal, m_token_start_line, m_token_start_column);
   }
 
-  void scan_token() {    
+  void scan_token() {
     const char c = advance();
     switch (c) {
     case '(':
@@ -117,6 +117,12 @@ private:
       break;
     case '*':
       add_token(token::Type::STAR);
+      break;
+    case '?':
+      add_token(token::Type::QUESTION_MARK);
+      break;
+    case ':':
+      add_token(token::Type::COLON);
       break;
     case '!':
       match('=') ? add_token(token::Type::BANG_EQUAL)
@@ -158,7 +164,7 @@ private:
         scan_identifier();
       } else {
         throw Error(m_line, m_column,
-                           std::format("Unexpected character: '{}'", c));
+                    std::format("Unexpected character: '{}'", c));
       }
       break;
     }
@@ -263,10 +269,10 @@ private:
       add_token(token::Type::NUMBER, value);
     } catch (const std::invalid_argument &e) {
       throw Error(m_line, m_column,
-                         std::format("Invalid number: '{}'", raw_value));
+                  std::format("Invalid number: '{}'", raw_value));
     } catch (const std::out_of_range &e) {
       throw Error(m_line, m_column,
-                         std::format("Number out of range: '{}'", raw_value));
+                  std::format("Number out of range: '{}'", raw_value));
     }
   }
 

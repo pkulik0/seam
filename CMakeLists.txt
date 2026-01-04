@@ -20,7 +20,6 @@ file(GLOB_RECURSE SEAM_MODULES "src/*.ixx")
 add_executable(seam ${SEAM_SOURCES})
 target_sources(seam PRIVATE FILE_SET CXX_MODULES FILES ${SEAM_MODULES})
 target_link_libraries(seam PRIVATE magic_enum::magic_enum)
-target_include_directories(seam PRIVATE ${magic_enum_DIR}/include)
 
 # Testing
 enable_testing()
@@ -33,8 +32,6 @@ target_sources(seam_tests PRIVATE FILE_SET CXX_MODULES FILES ${SEAM_MODULES})
 target_link_libraries(seam_tests PRIVATE
   GTest::gtest
   GTest::gtest_main
-  magic_enum::magic_enum
 )
-target_include_directories(seam_tests PRIVATE ${magic_enum_DIR}/include)
 
 gtest_discover_tests(seam_tests)

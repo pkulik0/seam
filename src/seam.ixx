@@ -9,6 +9,8 @@ export module seam;
 
 import seam.scanner;
 import seam.common;
+import seam.parser;
+import seam.visitor;
 
 export namespace seam {
 
@@ -25,7 +27,8 @@ public:
     const auto source = std::string{std::istreambuf_iterator<char>{file},
                                     std::istreambuf_iterator<char>{}};
     run(source);
-    if (m_had_error) return 2;
+    if (m_had_error)
+      return 2;
     return 0;
   }
 
@@ -48,6 +51,15 @@ private:
 
   void run(const std::string_view source) {
     scanner::Scanner scanner{source};
+    const auto tokens = scanner.scan_tokens();
+
+    parser::Parser parser{tokens};
+    try {
+      const auto expression = parser.parse();    
+      std::println("{}", visitor::AstPrinter{}.print(expression));
+    } catch (const parser::Error &e) {
+      std::println("{}", e.what());
+    }
   }
 
   void error(usize line, usize column, const std::string_view message) {

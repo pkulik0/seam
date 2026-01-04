@@ -26,7 +26,8 @@ enum class Type {
   SEMICOLON,
   SLASH,
   STAR,
-
+  QUESTION_MARK,
+  COLON,
   // One or two character tokens
   BANG,
   BANG_EQUAL,
