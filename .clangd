@@ -1,0 +1,13 @@
+CompileFlags:
+  Add:
+    - -std=c++26
+
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+  Suppress:
+    - "pp_module_begin_wrong_place"
+    - "module_import_in_extern_c"
+
+Index:
+  Background: Build

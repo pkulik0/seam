@@ -1,0 +1,9 @@
+{
+    "name": "seam",
+    "version": "0.1.0",
+    "dependencies": [
+        { "name": "gtest", "version>=": "1.17.0" },
+        { "name": "magic-enum", "version>=": "0.9.7" }
+    ],
+    "builtin-baseline": "74e6536215718009aae747d86d84b78376bf9e09"
+}
