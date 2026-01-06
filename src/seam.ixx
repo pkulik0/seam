@@ -29,7 +29,7 @@ export namespace seam {
 
 struct Options {
   std::optional<std::filesystem::path> script_path{};
-  bool is_verbose{false}; // -v --verbose
+  bool is_verbose{false};
 };
 
 class Seam {
