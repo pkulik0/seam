@@ -16,14 +16,25 @@ import seam.ast;
 import seam.interpreter;
 import seam.resolver;
 import seam.token;
+import seam.version;
 
 export namespace seam {
 
+struct Options {
+  std::optional<std::filesystem::path> script_path{};
+  bool is_verbose{false}; // -v --verbose
+};
+
 class Seam {
 public:
-  Seam() = default;
+  Seam(Options options) : m_options(std::move(options)) {}
 
-  int run_file(const std::filesystem::path &path) {
+  int run_script() {
+    if (!m_options.script_path) {
+      std::println("No script path provided");
+      return 1;
+    }
+    const auto path = m_options.script_path.value();
     std::ifstream file{path};
     if (!file.is_open()) {
       std::println("Could not open file \"{}\"", path.string());
@@ -38,7 +49,7 @@ public:
   }
 
   void run_repl() {
-    std::println("Welcome to Seam {}", VERSION);
+    std::println("Welcome to Seam {}", version::git_tag);
     std::string buffer{};
     while (true) {
       std::print("{}", m_prompt);
@@ -48,11 +59,15 @@ public:
     }
   }
 
-private:
-  static constexpr std::string_view VERSION = "0.1.0-dev";
+  void print_version() {
+    std::println("Seam {}", version::git_tag);
+    std::println("Build time: {}\n", version::build_time);
+  }
 
-  std::string m_prompt = ">> ";
-  bool m_had_error = false;
+private:
+  std::string m_prompt{">> "};
+  bool m_had_error{false};
+  Options m_options;
 
   interpreter::Interpreter m_interpreter;
   resolver::Resolver m_resolver{m_interpreter};
@@ -69,28 +84,16 @@ private:
 
       parser::Parser parser{filtered_tokens};
       const auto program = parser.parse();
-      std::println("\t{}", m_ast_printer.print(program));
+      if (m_options.is_verbose) {
+        std::println("\t{}", m_ast_printer.print(program));
+      }
 
       m_resolver.resolve(program);
       m_interpreter.execute(program);
-    } catch (const scanner::Error &e) {
-      std::println("{}", e.what());
-      m_had_error = true;
-    } catch (const parser::Error &e) {
-      std::println("{}", e.what());
-      m_had_error = true;
-    } catch (const resolver::ResolutionError &e) {
-      std::println("{}", e.what());
-      m_had_error = true;
-    } catch (const interpreter::RuntimeError &e) {
+    } catch (const std::exception &e) {
       std::println("{}", e.what());
       m_had_error = true;
     }
-  }
-
-  void error(usize line, usize column, const std::string_view message) {
-    std::println("Error: {} (line {}, column {})", message, line, column);
-    m_had_error = true;
   }
 };
 

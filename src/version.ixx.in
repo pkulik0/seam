@@ -1,0 +1,13 @@
+module;
+
+#include <string_view>
+
+export module seam.version;
+
+export namespace seam::version {
+    // The git tag or commit hash of the build.
+    constexpr std::string_view git_tag = "@GIT_VERSION@";
+
+    // The build time in UTC.
+    constexpr std::string_view build_time = "@BUILD_TIME@";
+}

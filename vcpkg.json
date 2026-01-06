@@ -2,6 +2,7 @@
     "name": "seam",
     "version": "0.1.0",
     "dependencies": [
+        { "name": "cli11", "version>=": "2.6.1" },
         { "name": "gtest", "version>=": "1.17.0" },
         { "name": "magic-enum", "version>=": "0.9.7" }
     ],
