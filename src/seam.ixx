@@ -1,8 +1,10 @@
 module;
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <print>
 
 export module seam;
@@ -12,6 +14,7 @@ import seam.common;
 import seam.parser;
 import seam.ast;
 import seam.interpreter;
+import seam.token;
 
 export namespace seam {
 
@@ -58,7 +61,11 @@ private:
       scanner::Scanner scanner{source};
       const auto tokens = scanner.scan_tokens();
 
-      parser::Parser parser{tokens};
+      std::vector<token::Token> filtered_tokens;
+      std::ranges::copy_if(tokens, std::back_inserter(filtered_tokens),
+        [](const auto& token) { return token.type() != token::Type::COMMENT; });
+
+      parser::Parser parser{filtered_tokens};
       const auto program = parser.parse();
       std::println("\t{}", m_ast_printer.print(program));
 

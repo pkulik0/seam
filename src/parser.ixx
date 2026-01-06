@@ -5,6 +5,7 @@ module;
 #include <memory>
 #include <optional>
 #include <print>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -39,12 +40,12 @@ private:
 
 class Parser {
 public:
-  Parser(const std::vector<Token> &tokens) : m_tokens(tokens) {}
+  Parser(std::span<const Token> tokens) : m_tokens(tokens) {}
 
   Program parse() { return parse_program(); }
 
 private:
-  const std::vector<Token> &m_tokens;
+  std::span<const Token> m_tokens;
   usize m_current = 0;
 
   template <typename... T> bool match(T... types) {
@@ -123,6 +124,9 @@ private:
 
   std::optional<Declaration> parse_declaration() {
     try {
+      if (match(Type::FUN)) {
+        return parse_function_declaration();
+      }
       if (match(Type::VAR)) {
         return parse_variable_declaration();
       }
@@ -132,6 +136,20 @@ private:
       synchronize();
       return std::nullopt;
     }
+  }
+
+  FunctionDeclaration parse_function_declaration() {
+    auto name = consume(Type::IDENTIFIER, "Expected function name.");
+    consume(Type::LEFT_PAREN, "Expected '(' after function name.");
+    std::vector<Token> parameters;
+    if (!check(Type::RIGHT_PAREN)) {
+      do {
+        parameters.push_back(consume(Type::IDENTIFIER, "Expected parameter name."));
+      } while (match(Type::COMMA));
+    }
+    consume(Type::RIGHT_PAREN, "Expected ')' after parameters.");
+    consume(Type::LEFT_BRACE, "Expected '{' before function body.");
+    return FunctionDeclaration{name, std::move(parameters), std::make_unique<BlockStatement>(parse_block())};
   }
 
   VariableDeclaration parse_variable_declaration() {
@@ -159,10 +177,24 @@ private:
     if (match(Type::PRINT)) {
       return parse_print_statement();
     }
+    if (match(Type::RETURN)) {
+      return parse_return_statement();
+    }
     if (match(Type::LEFT_BRACE)) {
       return parse_block();
     }
     return parse_expression_statement();
+  }
+
+  ReturnStatement parse_return_statement() {
+    Token keyword = previous();
+
+    std::unique_ptr<Expression> value = nullptr;
+    if (!check(Type::SEMICOLON)) {
+      value = make_expression(parse_expression());
+    }
+    consume(Type::SEMICOLON, "Expected ';' after return statement.");
+    return ReturnStatement{keyword, std::move(value)};
   }
 
   ForStatement parse_for_statement() {
@@ -341,12 +373,12 @@ private:
   }
 
   Expression parse_factor() {
-    auto expr = parse_unary();
+    auto expr = parse_call();
 
     while (match(Type::SLASH, Type::STAR)) {
       const auto op = previous();
       expr = Binary{make_expression(std::move(expr)), op,
-                    make_expression(parse_unary())};
+                    make_expression(parse_call())};
     }
 
     return expr;
@@ -358,7 +390,45 @@ private:
       return Unary{op, make_expression(parse_unary())};
     }
 
-    return parse_primary();
+    return parse_call();
+  }
+
+  Expression parse_call() {
+    auto expr = parse_primary();
+    while (match(Type::LEFT_PAREN)) {
+      expr = parse_call_arguments(std::move(expr));
+    }
+    return expr;
+  }
+
+  Expression parse_call_arguments(Expression&& expr) {
+    std::vector<std::unique_ptr<Expression>> arguments;
+    if (!check(Type::RIGHT_PAREN)) {
+      do {
+        if (arguments.size() >= 255) {
+          throw Error(peek(), "Cannot have more than 255 arguments.");
+        }
+        arguments.emplace_back(make_expression(parse_expression()));
+      } while (match(Type::COMMA));
+    }
+    Token paren = consume(Type::RIGHT_PAREN, "Expected ')' after arguments.");
+    return Call{make_expression(std::move(expr)), paren, std::move(arguments)};
+  }
+
+  FunctionExpression parse_function_expression() {
+    consume(Type::LEFT_PAREN, "Expected '(' after 'fun'.");
+    std::vector<Token> parameters;
+    if (!check(Type::RIGHT_PAREN)) {
+      do {
+        parameters.push_back(consume(Type::IDENTIFIER, "Expected parameter name."));
+      } while (match(Type::COMMA));
+    }
+    consume(Type::RIGHT_PAREN, "Expected ')' after parameters.");
+
+    consume(Type::LEFT_BRACE, "Expected '{' before function body.");
+    auto body = std::make_unique<BlockStatement>(parse_block());
+
+    return FunctionExpression{std::move(parameters), std::move(body)};
   }
 
   Expression parse_primary() {
@@ -368,6 +438,10 @@ private:
       return Literal{true};
     if (match(Type::NIL))
       return Literal{std::any{}};
+
+    if (match(Type::FUN)) {
+      return parse_function_expression();
+    }
 
     if (match(Type::NUMBER, Type::STRING)) {
       return Literal{previous().literal().value()};

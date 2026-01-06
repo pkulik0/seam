@@ -25,9 +25,24 @@ struct Ternary;
 struct Variable;
 struct Assignment;
 struct Logical;
+struct Call;
+struct FunctionExpression;
 
 using Expression = std::variant<Binary, Grouping, Literal, Unary, Ternary,
-                                Variable, Assignment, Logical>;
+                                Variable, Assignment, Logical, Call, FunctionExpression>;
+
+struct BlockStatement;
+
+struct FunctionExpression {
+  std::vector<Token> parameters;
+  std::unique_ptr<BlockStatement> body;
+};
+
+struct Call {
+  std::unique_ptr<Expression> callee;
+  Token paren;
+  std::vector<std::unique_ptr<Expression>> arguments;
+};
 
 struct Logical {
   std::unique_ptr<Expression> left;
@@ -82,15 +97,27 @@ struct IfStatement;
 struct WhileStatement;
 struct ForStatement;
 
+struct ReturnStatement {
+  Token keyword;
+  std::unique_ptr<Expression> value;
+};
+
 using Statement = std::variant<PrintStatement, Expression, BlockStatement,
-                               IfStatement, WhileStatement, ForStatement>;
+                               IfStatement, WhileStatement, ForStatement,
+                               ReturnStatement>;
 
 struct VariableDeclaration {
   Token name;
   std::unique_ptr<Expression> initializer;
 };
 
-using Declaration = std::variant<VariableDeclaration, Statement>;
+struct FunctionDeclaration {
+  Token name;
+  std::vector<Token> parameters;
+  std::unique_ptr<BlockStatement> body;
+};
+
+using Declaration = std::variant<VariableDeclaration, Statement, FunctionDeclaration>;
 
 struct IfStatement {
   std::unique_ptr<Expression> condition;
@@ -183,9 +210,31 @@ private:
             [this](const Logical &e) -> std::string {
               return parenthesize(e.op.lexeme(), *e.left, *e.right);
             },
+            [this](const Call &e) -> std::string {
+              std::string result = std::format("({}", print_expression(*e.callee));
+              for (const auto &arg : e.arguments) {
+                result += std::format(" {}", print_expression(*arg));
+              }
+              return result + ")";
+            },
+            [this](const FunctionExpression &e) -> std::string {
+              std::string params;
+              for (const auto &param : e.parameters) {
+                params += std::string(param.lexeme()) + ", ";
+              }
+              return std::format("fun({}) {}", params, print_block(*e.body));
+            },
         },
         expr);
   }
+  std::string print_block(const BlockStatement &b) const {
+    std::string result = "{\n";
+    for (const auto &decl : b.declarations) {
+      result += print_declaration(decl) + "\n";
+    }
+    return result + "}";
+  }
+
   std::string print_statement(const Statement &statement) const {
     return std::visit(
         overload{
@@ -196,11 +245,7 @@ private:
               return print_expression(e);
             },
             [this](const BlockStatement &b) -> std::string {
-              std::string result = "{\n";
-              for (const auto &decl : b.declarations) {
-                result += print_declaration(decl) + "\n";
-              }
-              return result + "}";
+              return print_block(b);
             },
             [this](const IfStatement &i) -> std::string {
               std::string result =
@@ -223,6 +268,10 @@ private:
               std::string increment_str = f.increment ? print_expression(*f.increment) : "";
               return std::format("for ({}; {}; {}) {}", init_str, condition_str, increment_str, print_statement(*f.body));
             },
+            [this](const ReturnStatement &r) -> std::string {
+               std::string value = r.value ? print_expression(*r.value) : "nil";
+               return std::format("return {}", value);
+            },
         },
         statement);
   }
@@ -236,6 +285,13 @@ private:
                           },
                           [this](const Statement &s) -> std::string {
                             return print_statement(s);
+                          },
+                          [this](const FunctionDeclaration &f) -> std::string {
+                            std::string params;
+                            for (const auto &param : f.parameters) {
+                              params += std::string(param.lexeme()) + ", ";
+                            }
+                            return std::format("func {}({}) {}", f.name.lexeme(), params, print_block(*f.body));
                           },
                       },
                       declaration);
