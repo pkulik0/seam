@@ -11,30 +11,43 @@ module;
 #include <utility>
 #include <vector>
 
+#include <iostream>
+#include <termcolor/termcolor.hpp>
+
 export module seam.parser;
 
 import seam.token;
 import seam.ast;
 import seam.common;
+import seam.error;
 
 using namespace seam::ast;
 using namespace seam::token;
 
 export namespace seam::parser {
 
-class Error : public std::exception {
+class Error : public error::SeamError {
 public:
-  Error(const Token &token, const std::string_view message) {
-    const auto location =
-        token.type() == Type::END_OF_FILE
-            ? "end of file"
-            : std::format("{}:{}", token.line(), token.column());
-    m_message = std::format("Parser error: {} ({})", message, location);
+  Error(Token token, std::string message)
+      : m_token(std::move(token)), m_message(std::move(message)) {}
+
+  [[nodiscard]] auto name() const noexcept -> const char * override {
+    return "Parser Error";
+  }
+  [[nodiscard]] auto reason() const noexcept -> const char * override {
+    return m_message.c_str();
+  }
+  [[nodiscard]] auto location() const noexcept -> error::Location override {
+    return {static_cast<int>(m_token.line()),
+            static_cast<int>(m_token.column())};
   }
 
-  const char *what() const noexcept override { return m_message.c_str(); }
+  [[nodiscard]] auto what() const noexcept -> const char* override {
+	  return m_message.c_str();
+  }
 
 private:
+  Token m_token;
   std::string m_message;
 };
 
@@ -61,7 +74,7 @@ private:
   Token consume(Type type, const std::string_view message) {
     if (check(type))
       return advance();
-    throw Error(peek(), message);
+    throw Error(peek(), std::string{message});
   }
 
   void synchronize() {
@@ -132,7 +145,10 @@ private:
       }
       return parse_statement();
     } catch (const Error &e) {
-      std::println("{}", e.what());
+      std::cerr << termcolor::bold << termcolor::red << e.name() << ": "
+                << termcolor::reset << e.reason() << " " << termcolor::yellow
+                << "(line " << e.location().line << ", column "
+                << e.location().column << ")" << termcolor::reset << std::endl;
       synchronize();
       return std::nullopt;
     }

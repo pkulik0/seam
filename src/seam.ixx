@@ -1,7 +1,5 @@
 module;
 
-#include <replxx.hxx>
-
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -11,6 +9,9 @@ module;
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include <replxx.hxx>
+#include <termcolor/termcolor.hpp>
 
 export module seam;
 
@@ -22,6 +23,7 @@ import seam.interpreter;
 import seam.resolver;
 import seam.token;
 import seam.version;
+import seam.error;
 
 export namespace seam {
 
@@ -141,8 +143,16 @@ private:
 
       m_resolver.resolve(program);
       m_interpreter.execute(program);
+    } catch (const error::SeamError &e) {
+      std::cerr << termcolor::bold << termcolor::red << "[" << e.name() << "] "
+                << termcolor::reset << e.reason() << " " << termcolor::yellow
+                << "(line " << e.location().line << ", column "
+                << e.location().column << ")" << termcolor::reset << std::endl;
+      m_had_error = true;
     } catch (const std::exception &e) {
-      std::println("{}", e.what());
+      std::cerr << termcolor::bold << termcolor::red
+                << "[Error] " << termcolor::reset << e.what()
+                << std::endl;
       m_had_error = true;
     }
   }

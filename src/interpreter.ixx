@@ -15,6 +15,7 @@ export module seam.interpreter;
 import seam.ast;
 import seam.common;
 import seam.token;
+import seam.error;
 
 using namespace seam::ast;
 using namespace seam::token;
@@ -29,14 +30,24 @@ private:
   std::any m_value;
 };
 
-class RuntimeError : public std::exception {
+class RuntimeError : public error::SeamError {
 public:
-  RuntimeError(const Token &token, const std::string_view message)
-      : m_message(std::format("Runtime error: {} ({}:{})", message,
-                              token.line(), token.column())) {}
-  const char *what() const noexcept override { return m_message.c_str(); }
+  RuntimeError(Token token, std::string message)
+      : m_token(std::move(token)), m_message(std::move(message)) {}
+
+  [[nodiscard]] auto name() const noexcept -> const char * override {
+    return "Runtime Error";
+  }
+  [[nodiscard]] auto reason() const noexcept -> const char * override {
+    return m_message.c_str();
+  }
+  [[nodiscard]] auto location() const noexcept -> error::Location override {
+    return {static_cast<int>(m_token.line()),
+            static_cast<int>(m_token.column())};
+  }
 
 private:
+  Token m_token;
   std::string m_message;
 };
 

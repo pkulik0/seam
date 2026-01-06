@@ -8,6 +8,7 @@ export module seam.scanner;
 
 import seam.common;
 import seam.token;
+import seam.error;
 
 bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
@@ -19,16 +20,24 @@ bool is_alphanumeric(char c) { return is_digit(c) || is_alpha(c); }
 
 export namespace seam::scanner {
 
-class Error : public std::exception {
+class Error : public error::SeamError {
 public:
-  Error(usize line, usize column, const std::string_view message)
-      : m_message(std::format("Scanner error: {} (line {}, column {})", message,
-                              line, column)) {}
+  Error(usize line, usize column, std::string message)
+      : m_message(std::move(message)), m_location({static_cast<int>(line), static_cast<int>(column)}) {}
 
-  const char *what() const noexcept override { return m_message.c_str(); }
+  [[nodiscard]] auto name() const noexcept -> const char* override {
+    return "Scanner Error";
+  }
+  [[nodiscard]] auto reason() const noexcept -> const char* override {
+    return m_message.c_str();
+  }
+  [[nodiscard]] auto location() const noexcept -> error::Location override {
+	return m_location;
+  }
 
 private:
   std::string m_message;
+  error::Location m_location;
 };
 
 class Scanner {
