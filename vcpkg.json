@@ -4,7 +4,8 @@
     "dependencies": [
         { "name": "cli11", "version>=": "2.6.1" },
         { "name": "gtest", "version>=": "1.17.0" },
-        { "name": "magic-enum", "version>=": "0.9.7" }
+        { "name": "magic-enum", "version>=": "0.9.7" },
+        { "name": "replxx", "version>=": "0.0.4" }
     ],
     "builtin-baseline": "74e6536215718009aae747d86d84b78376bf9e09"
 }

@@ -41,6 +41,7 @@ configure_file(
 # Dependencies
 find_package(magic_enum CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
+find_package(replxx CONFIG REQUIRED)
 
 # Seam executable
 file(GLOB_RECURSE SEAM_SOURCES "src/*.cxx")
@@ -49,7 +50,7 @@ file(GLOB_RECURSE SEAM_MODULES "src/*.ixx")
 list(APPEND SEAM_MODULES ${GENERATED_VERSION_IXX})
 add_executable(seam ${SEAM_SOURCES})
 target_sources(seam PRIVATE FILE_SET CXX_MODULES FILES ${SEAM_MODULES})
-target_link_libraries(seam PRIVATE magic_enum::magic_enum CLI11::CLI11)
+target_link_libraries(seam PRIVATE magic_enum::magic_enum CLI11::CLI11 replxx::replxx)
 
 # Testing
 enable_testing()
@@ -62,6 +63,7 @@ target_sources(seam_tests PRIVATE FILE_SET CXX_MODULES FILES ${SEAM_MODULES})
 target_link_libraries(seam_tests PRIVATE
   GTest::gtest
   GTest::gtest_main
+  replxx::replxx
 )
 
 gtest_discover_tests(seam_tests)

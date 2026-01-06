@@ -1,11 +1,16 @@
 module;
 
+#include <replxx.hxx>
+
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <print>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 export module seam;
 
@@ -50,13 +55,57 @@ public:
 
   void run_repl() {
     std::println("Welcome to Seam {}", version::git_tag);
-    std::string buffer{};
+    replxx::Replxx rx;
+
+    const auto history_path =
+        std::filesystem::path{std::getenv("HOME")} / ".seam_history";
+    rx.history_load(history_path.string());
+
+    rx.set_completion_callback(
+        [](const std::string &context, int & /*context_len*/) {
+          replxx::Replxx::completions_t completions;
+          std::vector<std::string> examples = {
+              "exit"}; // TODO: Implement a completion system
+          for (const auto &ex : examples) {
+            if (ex.rfind(context, 0) == 0) {
+              completions.emplace_back(ex);
+            }
+          }
+          return completions;
+        });
+    rx.set_highlighter_callback(
+        [](const std::string &context, replxx::Replxx::colors_t &colors) {
+          for (size_t i = 0; i < context.length();
+               ++i) { // TODO: Create a highlighter
+            if (std::isdigit(context[i])) {
+              colors[i] = replxx::Replxx::Color::YELLOW;
+            }
+          }
+        });
+
     while (true) {
-      std::print("{}", m_prompt);
-      std::getline(std::cin, buffer);
-      run(buffer);
+      const char *c_line = rx.input(m_prompt);
+      if (c_line == nullptr) {
+        std::println("Bye!");
+        break;
+      }
+
+      const std::string line{c_line};
+      if (line.empty()) {
+        continue;
+      }
+      if (line == "exit") {
+        std::println("Bye!");
+        break;
+      }
+
+      rx.history_add(line);
+      run(line);
       m_had_error = false;
     }
+
+    rx.history_save(history_path.string());
+    std::println(""); // new line after exit
   }
 
   void print_version() {
@@ -80,7 +129,9 @@ private:
 
       std::vector<token::Token> filtered_tokens;
       std::ranges::copy_if(tokens, std::back_inserter(filtered_tokens),
-        [](const auto& token) { return token.type() != token::Type::COMMENT; });
+                           [](const auto &token) {
+                             return token.type() != token::Type::COMMENT;
+                           });
 
       parser::Parser parser{filtered_tokens};
       const auto program = parser.parse();
