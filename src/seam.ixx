@@ -72,7 +72,7 @@ private:
       std::println("\t{}", m_ast_printer.print(program));
 
       m_resolver.resolve(program);
-      m_interpreter.run(program);
+      m_interpreter.execute(program);
     } catch (const scanner::Error &e) {
       std::println("{}", e.what());
       m_had_error = true;

@@ -517,7 +517,7 @@ public:
     m_globals->define("clock", clock);
   }
 
-  void run(const Program &program) {
+  void execute(const Program &program) {
     for (const auto &declaration : program.declarations) {
       execute_declaration(declaration);
     }
