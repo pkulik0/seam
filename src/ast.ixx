@@ -11,6 +11,7 @@ module;
 
 export module seam.ast;
 
+import seam.common;
 import seam.token;
 
 using namespace seam::token;
@@ -143,10 +144,6 @@ struct BlockStatement {
 
 struct Program {
   std::vector<Declaration> declarations;
-};
-
-template <typename... Ts> struct overload : Ts... {
-  using Ts::operator()...;
 };
 
 class AstPrinter {

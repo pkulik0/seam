@@ -18,4 +18,9 @@ using i32 = std::int32_t;
 using i64 = std::int64_t;
 using isize = std::ptrdiff_t;
 
+// Visitor pattern helper for std::variant
+template <typename... Ts> struct overload : Ts... {
+  using Ts::operator()...;
+};
+
 } // namespace seam

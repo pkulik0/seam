@@ -14,6 +14,7 @@ import seam.common;
 import seam.parser;
 import seam.ast;
 import seam.interpreter;
+import seam.resolver;
 import seam.token;
 
 export namespace seam {
@@ -54,6 +55,7 @@ private:
   bool m_had_error = false;
 
   interpreter::Interpreter m_interpreter;
+  resolver::Resolver m_resolver{m_interpreter};
   ast::AstPrinter m_ast_printer;
 
   void run(const std::string_view source) {
@@ -69,11 +71,15 @@ private:
       const auto program = parser.parse();
       std::println("\t{}", m_ast_printer.print(program));
 
+      m_resolver.resolve(program);
       m_interpreter.run(program);
     } catch (const scanner::Error &e) {
       std::println("{}", e.what());
       m_had_error = true;
     } catch (const parser::Error &e) {
+      std::println("{}", e.what());
+      m_had_error = true;
+    } catch (const resolver::ResolutionError &e) {
       std::println("{}", e.what());
       m_had_error = true;
     } catch (const interpreter::RuntimeError &e) {

@@ -21,10 +21,6 @@ using namespace seam::token;
 
 export namespace seam::interpreter {
 
-template <typename... Ts> struct overload : Ts... {
-  using Ts::operator()...;
-};
-
 class ReturnValue : public std::exception {
 public:
   ReturnValue(const std::any &value) : m_value(value) {}
@@ -44,7 +40,7 @@ private:
   std::string m_message;
 };
 
-class Environment {
+class Environment : public std::enable_shared_from_this<Environment> {
 public:
   Environment() = default;
   Environment(std::shared_ptr<Environment> parent) : m_enclosing(parent) {}
@@ -82,6 +78,22 @@ public:
     return std::nullopt;
   }
 
+  std::shared_ptr<Environment> ancestor(int distance) {
+    std::shared_ptr<Environment> environment = shared_from_this();
+    for (int i = 0; i < distance; i++) {
+      environment = environment->m_enclosing;
+    }
+    return environment;
+  }
+
+  std::any getAt(int distance, const std::string &name) {
+    return ancestor(distance)->m_values[name];
+  }
+
+  void assignAt(int distance, const Token &name, const std::any &value) {
+    ancestor(distance)->m_values[std::string{name.lexeme()}] = value;
+  }
+
 private:
   std::unordered_map<std::string, std::any> m_values{};
   std::shared_ptr<Environment> m_enclosing = nullptr;
@@ -91,6 +103,7 @@ class Interpreter {
 private:
   std::shared_ptr<Environment> m_globals;
   std::shared_ptr<Environment> m_env;
+  std::unordered_map<const Expression*, int> m_locals;
 
   class ScopeGuard {
   public:
@@ -261,6 +274,7 @@ private:
   }
 
   std::any evaluate(const Expression &expr) {
+    const Expression *expr_ptr = &expr;
     return std::visit(
         overload{
             [this](const Binary &e) -> std::any {
@@ -347,17 +361,18 @@ private:
                 return evaluate(*e.false_expr);
               }
             },
-            [this](const Variable &e) -> std::any {
-              const auto value = m_env->get(std::string{e.name.lexeme()});
-              if (value) {
-                return *value;
-              }
-              throw RuntimeError(e.name, std::format("Undefined variable '{}'.",
-                                                     e.name.lexeme()));
+            [this, expr_ptr](const Variable &e) -> std::any {
+              return lookUpVariable(e.name, expr_ptr);
             },
-            [this](const Assignment &e) -> std::any {
+            [this, expr_ptr](const Assignment &e) -> std::any {
               const auto value = evaluate(*e.value);
-              m_env->assign(e.name, value);
+
+              const auto it = m_locals.find(expr_ptr);
+              if (it != m_locals.end()) {
+                m_env->assignAt(it->second, e.name, value);
+              } else {
+                m_globals->assign(e.name, value);
+              }
               return value;
             },
             [this](const Logical &e) -> std::any {
@@ -471,7 +486,24 @@ private:
                declaration);
   }
 
+  std::any lookUpVariable(const Token &name, const Expression *expr) {
+    const auto it = m_locals.find(expr);
+    if (it != m_locals.end()) {
+      return m_env->getAt(it->second, std::string{name.lexeme()});
+    } else {
+      const auto value = m_globals->get(std::string{name.lexeme()});
+      if (value) {
+        return *value;
+      }
+      throw RuntimeError(name, std::format("Undefined variable '{}'.", name.lexeme()));
+    }
+  }
+
 public:
+  void resolve(const Expression *expr, int depth) {
+    m_locals[expr] = depth;
+  }
+
   Interpreter() : m_globals(std::make_shared<Environment>()), m_env(m_globals) {
     std::shared_ptr<SeamCallable> clock = std::make_shared<SeamNativeFunction>(
         [](Interpreter &, std::vector<std::any> &&) -> std::any {
