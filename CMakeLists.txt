@@ -14,6 +14,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
+find_program(MOLD_LINKER mold)
+if(MOLD_LINKER)
+    message(STATUS "Using mold linker: ${MOLD_LINKER}")
+    add_link_options("-fuse-ld=mold")
+else()
+    message(STATUS "mold linker not found, using default linker")
+endif()
+
 # Versioning
 find_package(Git QUIET)
 if(GIT_FOUND)
