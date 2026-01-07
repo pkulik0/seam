@@ -89,8 +89,8 @@ class Interpreter {
                  std::shared_ptr<Environment> closure, bool is_initializer)
         : SeamCallable(declaration.parameters.size()),
           m_declaration(declaration), m_closure(closure),
-          m_is_initializer(is_initializer),
-          m_is_static(declaration.is_static) {}
+          m_is_initializer(is_initializer), m_is_static(declaration.is_static) {
+    }
 
     bool is_static() const { return m_is_static; }
 
@@ -183,6 +183,7 @@ class Interpreter {
   class SeamClass : public SeamCallable,
                     public std::enable_shared_from_this<SeamClass> {
     Token m_name;
+    std::shared_ptr<SeamClass> m_superclass;
 
   public:
     using MethodMap =
@@ -192,8 +193,10 @@ class Interpreter {
     MethodMap m_methods;
 
   public:
-    SeamClass(const Token &name, MethodMap &&methods)
-        : SeamCallable(0), m_name(name), m_methods(std::move(methods)) {}
+    SeamClass(const Token &name, std::shared_ptr<SeamClass> superclass,
+              MethodMap &&methods)
+        : SeamCallable(0), m_name(name), m_superclass(std::move(superclass)),
+          m_methods(std::move(methods)) {}
 
     std::any call(Interpreter &interpreter,
                   std::vector<std::any> &&arguments) override {
@@ -218,6 +221,9 @@ class Interpreter {
       auto it = m_methods.find(name);
       if (it != m_methods.end()) {
         return it->second;
+      }
+      if (m_superclass) {
+        return m_superclass->get_method(name);
       }
       return std::nullopt;
     }
@@ -487,6 +493,30 @@ class Interpreter {
             [this, expr_ptr](const ThisExpr &e) -> std::any {
               return lookUpVariable(e.keyword, expr_ptr);
             },
+            [this, expr_ptr](const Super &s) -> std::any {
+              auto it = m_locals.find(expr_ptr);
+              if(it == m_locals.end()) {
+                throw RuntimeError(s.keyword, "Super not available in this context.");
+              }
+              auto distance = it->second;
+              auto opt_superclass = m_env->ancestor(distance)->get("super");
+              if (!opt_superclass) {
+                throw RuntimeError(s.keyword, "Superclass not initialized.");
+              }
+              std::shared_ptr<SeamCallable> super = std::any_cast<std::shared_ptr<SeamCallable>>(*opt_superclass);
+              std::shared_ptr<SeamClass> superclass = std::dynamic_pointer_cast<SeamClass>(super);
+              if (!superclass) {
+                throw RuntimeError(s.keyword, "Superclass not initialized.");
+              }
+              auto opt_method = superclass->get_method(s.method);
+              if (!opt_method) {
+                throw RuntimeError(s.method, std::format("Undefined property '{}'.", s.method.lexeme()));
+              }
+              
+              auto instance = std::any_cast<std::shared_ptr<SeamInstance>>(
+                  m_env->getAt(distance - 1, "this"));
+              return opt_method.value()->bind(instance);
+            },
         },
         expr);
   }
@@ -555,35 +585,66 @@ class Interpreter {
   }
 
   void execute_declaration(const Declaration &declaration) {
-    std::visit(overload{
-                   [this](const VariableDeclaration &d) -> void {
-                     auto value = evaluate(*d.initializer);
-                     m_env->define(d.name, value);
-                   },
-                   [this](const Statement &statement) -> void {
-                     execute_statement(statement);
-                   },
-                   [this](const FunctionDeclaration &d) -> void {
-                     std::shared_ptr<SeamCallable> function =
-                         std::make_shared<SeamFunction>(d, m_env, false);
-                     m_env->define(d.name, function);
-                   },
-                   [this](const ClassDeclaration &d) -> void {
-                     m_env->define(d.name, std::nullopt);
-                     SeamClass::MethodMap methods;
-                     for (const auto &method : d.methods) {
-                       const auto name = std::string{method->name.lexeme()};
-                       const bool is_initializer = name == "init";
-                       methods[name] = std::make_shared<SeamFunction>(
-                           *method, m_env, is_initializer);
-                     }
-                     std::shared_ptr<SeamCallable> class_ =
-                         std::make_shared<SeamClass>(d.name,
-                                                     std::move(methods));
-                     m_env->assign(d.name, class_);
-                   },
-               },
-               declaration);
+    std::visit(
+        overload{
+            [this](const VariableDeclaration &d) -> void {
+              auto value = evaluate(*d.initializer);
+              m_env->define(d.name, value);
+            },
+            [this](const Statement &statement) -> void {
+              execute_statement(statement);
+            },
+            [this](const FunctionDeclaration &d) -> void {
+              std::shared_ptr<SeamCallable> function =
+                  std::make_shared<SeamFunction>(d, m_env, false);
+              m_env->define(d.name, function);
+            },
+            [this](const ClassDeclaration &d) -> void {
+              m_env->define(d.name, std::nullopt);
+
+              std::shared_ptr<SeamClass> superclass_ptr = nullptr;
+              if (d.superclass) {
+                auto superclass_value =
+                    lookUpVariable(d.superclass->name, nullptr);
+                if (superclass_value.type() !=
+                    typeid(std::shared_ptr<SeamCallable>)) {
+                  throw RuntimeError(d.superclass->name,
+                                     "Superclass must be a class.");
+                }
+                auto superclass_callable =
+                    std::any_cast<std::shared_ptr<SeamCallable>>(
+                        superclass_value);
+                superclass_ptr =
+                    std::dynamic_pointer_cast<SeamClass>(superclass_callable);
+                if (!superclass_ptr) {
+                  throw RuntimeError(d.superclass->name,
+                                     "Superclass must be a class.");
+                }
+
+                m_env = std::make_shared<Environment>(m_env);
+                m_env->define("super", std::static_pointer_cast<SeamCallable>(
+                                           superclass_ptr));
+              }
+
+              SeamClass::MethodMap methods;
+              for (const auto &method : d.methods) {
+                const auto name = std::string{method->name.lexeme()};
+                const bool is_initializer = name == "init";
+                methods[name] = std::make_shared<SeamFunction>(*method, m_env,
+                                                               is_initializer);
+              }
+
+              std::shared_ptr<SeamCallable> class_ =
+                  std::make_shared<SeamClass>(d.name, std::move(superclass_ptr),
+                                              std::move(methods));
+
+              if (d.superclass) {
+                m_env = m_env->enclosing();
+              }
+              m_env->assign(d.name, class_);
+            },
+        },
+        declaration);
   }
 
   std::any lookUpVariable(const Token &name, const Expression *expr) {

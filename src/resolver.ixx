@@ -42,8 +42,14 @@ private:
 
 class Resolver {
 private:
-  enum class FunctionType { NONE, FUNCTION, METHOD, INITIALIZER, STATIC_METHOD };
-  enum class ClassType { NONE, CLASS };
+  enum class FunctionType {
+    NONE,
+    FUNCTION,
+    METHOD,
+    INITIALIZER,
+    STATIC_METHOD
+  };
+  enum class ClassType { NONE, CLASS, SUBCLASS };
 
   interpreter::Interpreter &m_interpreter;
   std::vector<std::unordered_map<std::string, bool>> m_scopes;
@@ -150,6 +156,17 @@ private:
               }
               resolve_local(expr_ptr, e.keyword);
             },
+            [this, expr_ptr](const Super &e) -> void {
+              if (m_current_class == ClassType::NONE) {
+                throw ResolutionError(e.keyword,
+                                      "Can't use 'super' outside of a class.");
+              }
+              if (m_current_class != ClassType::SUBCLASS) {
+                throw ResolutionError(
+                    e.keyword, "Can't use 'super' in a class with no superclass.");
+              }
+              resolve_local(expr_ptr, e.keyword);
+            },
         },
         expr);
   }
@@ -240,16 +257,28 @@ private:
                      declare(d.name);
                      define(d.name);
 
+                     if (d.superclass) {
+                       m_current_class = ClassType::SUBCLASS;
+
+                       if (d.name.lexeme() == d.superclass->name.lexeme()) {
+                         throw ResolutionError(
+                             d.superclass->name,
+                             "A class can't inherit from itself.");
+                       }
+                       resolve(Expression{*d.superclass});
+
+                       begin_scope();
+                       m_scopes.back()["super"] = true;
+                     }
+
                      for (const auto &method : d.methods) {
                        FunctionType type = FunctionType::METHOD;
                        if (method->name.lexeme() == "init") {
                          type = FunctionType::INITIALIZER;
                        }
-                       if (method->is_static) {
-                         type = FunctionType::STATIC_METHOD;
-                       }
 
                        if (method->is_static) {
+                         type = FunctionType::STATIC_METHOD;
                          resolve(*method, type);
                        } else {
                          begin_scope();
@@ -257,6 +286,10 @@ private:
                          resolve(*method, type);
                          end_scope();
                        }
+                     }
+
+                     if (d.superclass) {
+                       end_scope();
                      }
 
                      m_current_class = enclosing_class;

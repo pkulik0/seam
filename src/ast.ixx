@@ -31,9 +31,16 @@ struct FunctionExpression;
 struct Get;
 struct Set;
 struct ThisExpr;
+struct Super;
+// TODO: Move those that can be moved above Expression to avoid predeclaration.
 
 using Expression = std::variant<Binary, Grouping, Literal, Unary, Ternary,
-                                Variable, Assignment, Logical, Call, FunctionExpression, Get, Set, ThisExpr>;
+                                Variable, Assignment, Logical, Call, FunctionExpression, Get, Set, ThisExpr, Super>;
+
+struct Super {
+  Token keyword;
+  Token method;
+};
 
 struct Get {
   std::unique_ptr<Expression> object;
@@ -139,6 +146,7 @@ struct FunctionDeclaration {
 
 struct ClassDeclaration {
   Token name;
+  std::unique_ptr<Variable> superclass;
   std::vector<std::unique_ptr<FunctionDeclaration>> methods;
 };
 
@@ -254,6 +262,9 @@ private:
             [](const ThisExpr &) -> std::string {
               return "this";
             },
+            [](const Super &s) -> std::string {
+              return std::format("super.{}", s.method.lexeme());
+            },
         },
         expr);
   }
@@ -332,7 +343,8 @@ private:
                             for (const auto &method : c.methods) {
                               methods += std::format("{}", print_function_declaration(*method));
                             }
-                            return std::format("class {}\n{{{}\n}}", c.name.lexeme(), methods);
+                            std::string superclass = c.superclass ? std::format("+ {}", c.superclass->name.lexeme()) : "";
+                            return std::format("class {} {} {{{}\n}}", c.name.lexeme(), superclass, methods);
                           },
                       },
                       declaration);

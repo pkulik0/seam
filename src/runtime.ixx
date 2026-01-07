@@ -91,6 +91,8 @@ public:
     ancestor(distance)->m_values[std::string{name.lexeme()}] = value;
   }
 
+  std::shared_ptr<Environment> enclosing() const { return m_enclosing; }
+
 private:
   std::unordered_map<std::string, std::any> m_values{};
   std::shared_ptr<Environment> m_enclosing = nullptr;

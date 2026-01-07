@@ -160,6 +160,12 @@ private:
 
   ClassDeclaration parse_class_declaration() {
     auto name = consume(Type::IDENTIFIER, "Expected class name.");
+
+    std::unique_ptr<Variable> superclass = nullptr;
+    if (match(Type::PLUS)) {
+      consume(Type::IDENTIFIER, "Expected superclass name.");
+      superclass = std::make_unique<Variable>(previous());
+    }
     consume(Type::LEFT_BRACE, "Expected '{' before class body.");
 
     std::vector<std::unique_ptr<FunctionDeclaration>> methods;
@@ -172,7 +178,7 @@ private:
     }
 
     consume(Type::RIGHT_BRACE, "Expected '}' after class body.");
-    return ClassDeclaration{name, std::move(methods)};
+    return ClassDeclaration{name, std::move(superclass), std::move(methods)};
   }
 
   FunctionDeclaration parse_function_declaration() {
@@ -496,6 +502,13 @@ private:
       return Literal{true};
     if (match(Type::NIL))
       return Literal{std::any{}};
+    
+    if (match(Type::SUPER)) {
+      auto keyword = previous();
+      consume(Type::DOT, "Expected '.' after 'super'.");
+      auto method = consume(Type::IDENTIFIER, "Expected method name.");
+      return Super{keyword, method};
+    }
 
     if (match(Type::FUN)) {
       return parse_function_expression();
