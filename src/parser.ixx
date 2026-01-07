@@ -171,10 +171,8 @@ private:
   VariableDeclaration parse_variable_declaration() {
     const auto name = consume(Type::IDENTIFIER, "Expected variable name.");
 
-    std::unique_ptr<Expression> initializer = nullptr;
-    if (match(Type::EQUAL)) {
-      initializer = make_expression(parse_expression());
-    }
+    consume(Type::EQUAL, "Expected '=' after variable name.");
+    auto initializer = make_expression(parse_expression());
 
     consume(Type::SEMICOLON, "Expected ';' after variable declaration.");
     return VariableDeclaration{name, std::move(initializer)};
