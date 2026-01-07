@@ -24,6 +24,7 @@ import seam.resolver;
 import seam.token;
 import seam.version;
 import seam.error;
+import seam.highlight;
 
 export namespace seam {
 
@@ -77,14 +78,13 @@ public:
           }
           return completions;
         });
+    highlight::Highlighter highlighter;
+    highlight::ReplxxConverter converter;
     rx.set_highlighter_callback(
-        [](const std::string &context, replxx::Replxx::colors_t &colors) {
-          for (size_t i = 0; i < context.length();
-               ++i) { // TODO: Create a highlighter
-            if (std::isdigit(context[i])) {
-              colors[i] = replxx::Replxx::Color::YELLOW;
-            }
-          }
+        [&highlighter, &converter](const std::string &context,
+                                    replxx::Replxx::colors_t &colors) {
+          auto result = highlighter.highlight(context);
+          converter.apply(result, context, colors);
         });
 
     while (true) {

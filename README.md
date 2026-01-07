@@ -41,7 +41,7 @@ Seam is a dynamically-typed, interpreted programming language designed to be sim
 
 Declare variables with `let`:
 
-```seam
+```javascript
 let name = "Seam";
 let age = 1;
 let pi = 3.14159;
@@ -63,7 +63,7 @@ age = 2;
 
 ### Operators
 
-```seam
+```javascript
 // Arithmetic
 let sum = 10 + 5;       // 15
 let diff = 10 - 5;      // 5
@@ -90,7 +90,7 @@ let result = age > 18 ? "adult" : "minor";
 ### Control Flow
 
 **If/Else:**
-```seam
+```javascript
 if (score >= 90) {
     print "A";
 } else if (score >= 80) {
@@ -101,7 +101,7 @@ if (score >= 90) {
 ```
 
 **While Loop:**
-```seam
+```javascript
 let i = 0;
 while (i < 5) {
     print i;
@@ -110,7 +110,7 @@ while (i < 5) {
 ```
 
 **For Loop:**
-```seam
+```javascript
 for (let i = 0; i < 5; i = i + 1) {
     print i;
 }
@@ -119,7 +119,7 @@ for (let i = 0; i < 5; i = i + 1) {
 ### Functions
 
 **Named Functions:**
-```seam
+```javascript
 fn greet(name) {
     return "Hello, " + name + "!";
 }
@@ -128,7 +128,7 @@ print greet("World");  // Hello, World!
 ```
 
 **Multiple Parameters:**
-```seam
+```javascript
 fn add(a, b) {
     return a + b;
 }
@@ -137,7 +137,7 @@ print add(2, 3);  // 5
 ```
 
 **Lambda Expressions:**
-```seam
+```javascript
 let multiply = fn(a, b) {
     return a * b;
 };
@@ -146,7 +146,7 @@ print multiply(4, 5);  // 20
 ```
 
 **Closures:**
-```seam
+```javascript
 fn makeCounter() {
     let count = 0;
     return fn() {
@@ -162,7 +162,7 @@ print counter();  // 3
 ```
 
 **Higher-Order Functions:**
-```seam
+```javascript
 fn applyTwice(f, x) {
     return f(f(x));
 }
@@ -177,7 +177,7 @@ print applyTwice(double, 5);  // 20
 ### Structs
 
 **Basic Struct:**
-```seam
+```javascript
 struct Point {
     init(x, y) {
         self.x = x;
@@ -194,7 +194,7 @@ p.display();  // (10, 20)
 ```
 
 **Methods:**
-```seam
+```javascript
 struct Rectangle {
     init(width, height) {
         self.width = width;
@@ -216,7 +216,7 @@ print rect.perimeter();  // 16
 ```
 
 **Static Methods:**
-```seam
+```javascript
 struct Math {
     static square(n) {
         return n * n;
@@ -235,7 +235,7 @@ print Math.max(10, 20);  // 20
 
 Use `+` to add a parent struct:
 
-```seam
+```javascript
 struct Animal {
     init(name) {
         self.name = name;
@@ -267,7 +267,7 @@ dog.fetch();  // Buddy fetches the ball
 ```
 
 **Calling Parent Methods:**
-```seam
+```javascript
 struct Cat + Animal {
     speak() {
         parent.speak();  // Call parent's speak
@@ -283,7 +283,7 @@ cat.speak();
 
 ### Comments
 
-```seam
+```javascript
 // Single-line comment
 
 /*
@@ -296,7 +296,7 @@ cat.speak();
 
 ### Print Statement
 
-```seam
+```javascript
 print "Hello, World!";
 print 42;
 print true;
@@ -307,7 +307,7 @@ print 2 + 2;
 
 ### Fibonacci Sequence
 
-```seam
+```javascript
 fn fib(n) {
     if (n <= 1) {
         return n;
@@ -323,7 +323,7 @@ for (let i = 0; i < 10; i = i + 1) {
 
 ### Factorial
 
-```seam
+```javascript
 fn factorial(n) {
     if (n <= 1) {
         return 1;
@@ -336,7 +336,7 @@ print factorial(5);  // 120
 
 ### Bank Account
 
-```seam
+```javascript
 struct BankAccount {
     init(owner, balance) {
         self.owner = owner;
@@ -371,7 +371,7 @@ print account.getBalance();  // 1300
 
 ### Linked List
 
-```seam
+```javascript
 struct Node {
     init(value) {
         self.value = value;
