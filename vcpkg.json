@@ -8,5 +8,5 @@
         { "name": "replxx", "version>=": "0.0.4" },
         { "name": "termcolor", "version>=": "2.1.0" }
     ],
-    "builtin-baseline": "74e6536215718009aae747d86d84b78376bf9e09"
+    "builtin-baseline": "5f4cddb220a4630a8ffc8db9270b8bf03483df60"
 }
