@@ -2,6 +2,7 @@ module;
 
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 export module seam.error;
 
@@ -16,12 +17,12 @@ public:
 
   ~Error() override = default;
 
-  [[nodiscard]] virtual auto name() const noexcept -> const char * = 0;
-  [[nodiscard]] virtual auto reason() const noexcept -> const char * = 0;
+  [[nodiscard]] virtual auto name() const noexcept -> std::string_view= 0;
+  [[nodiscard]] virtual auto reason() const noexcept -> std::string_view = 0;
   [[nodiscard]] virtual auto location() const noexcept -> Location = 0;
 
   [[nodiscard]] auto what() const noexcept -> const char * override {
-    return reason();
+    return reason().data();
   }
 };
 } // namespace seam

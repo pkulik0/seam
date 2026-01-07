@@ -24,11 +24,11 @@ public:
   ResolutionError(Token token, std::string message)
       : m_token(std::move(token)), m_message(std::move(message)) {}
 
-  [[nodiscard]] auto name() const noexcept -> const char * override {
+  [[nodiscard]] auto name() const noexcept -> std::string_view override {
     return "Resolution Error";
   }
-  [[nodiscard]] auto reason() const noexcept -> const char * override {
-    return m_message.c_str();
+  [[nodiscard]] auto reason() const noexcept -> std::string_view override {
+    return m_message;
   }
   [[nodiscard]] auto location() const noexcept -> ResolutionError::Location override {
     return {static_cast<int>(m_token.line()),

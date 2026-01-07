@@ -25,11 +25,11 @@ public:
   ScannerError(usize line, usize column, std::string message)
       : m_message(std::move(message)), m_location({static_cast<int>(line), static_cast<int>(column)}) {}
 
-  [[nodiscard]] auto name() const noexcept -> const char* override {
+  [[nodiscard]] auto name() const noexcept -> std::string_view override {
     return "Scanner Error";
   }
-  [[nodiscard]] auto reason() const noexcept -> const char* override {
-    return m_message.c_str();
+  [[nodiscard]] auto reason() const noexcept -> std::string_view override {
+    return m_message;
   }
   [[nodiscard]] auto location() const noexcept -> Error::Location override {
 	return m_location;
