@@ -31,13 +31,13 @@ public:
   [[nodiscard]] auto reason() const noexcept -> std::string_view override {
     return m_message;
   }
-  [[nodiscard]] auto location() const noexcept -> Error::Location override {
+  [[nodiscard]] auto location() const noexcept -> Location override {
 	return m_location;
   }
 
 private:
   std::string m_message;
-  Error::Location m_location;
+  Location m_location;
 };
 
 class Scanner {

@@ -30,7 +30,7 @@ public:
   [[nodiscard]] auto reason() const noexcept -> std::string_view override {
     return m_message;
   }
-  [[nodiscard]] auto location() const noexcept -> ResolutionError::Location override {
+  [[nodiscard]] auto location() const noexcept -> Location override {
     return {static_cast<int>(m_token.line()),
             static_cast<int>(m_token.column())};
   }
