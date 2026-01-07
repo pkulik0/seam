@@ -17,11 +17,9 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-struct Classes : public fixtures::Execution {};
+struct Structs : public fixtures::Execution {};
 
-// Struct Declaration and Instantiation
-
-TEST_F(Classes, EmptyStruct) {
+TEST_F(Structs, EmptyStruct) {
   std::string source = R"(
     struct Foo {}
     let f = Foo();
@@ -31,7 +29,7 @@ TEST_F(Classes, EmptyStruct) {
   EXPECT_EQ(last_output(), "Foo instance\n");
 }
 
-TEST_F(Classes, StructAsValue) {
+TEST_F(Structs, StructAsValue) {
   std::string source = R"(
     struct Foo {}
     let cls = Foo;
@@ -42,7 +40,7 @@ TEST_F(Classes, StructAsValue) {
   EXPECT_EQ(last_output(), "Foo instance\n");
 }
 
-TEST_F(Classes, MultipleInstances) {
+TEST_F(Structs, MultipleInstances) {
   std::string source = R"(
     struct Counter {}
     let a = Counter();
@@ -56,9 +54,7 @@ TEST_F(Classes, MultipleInstances) {
   EXPECT_EQ(last_output(), "1\n2\n");
 }
 
-// Instance Properties
-
-TEST_F(Classes, SetProperty) {
+TEST_F(Structs, SetProperty) {
   std::string source = R"(
     struct Obj {}
     let o = Obj();
@@ -69,7 +65,7 @@ TEST_F(Classes, SetProperty) {
   EXPECT_EQ(last_output(), "5\n");
 }
 
-TEST_F(Classes, PropertyIndependence) {
+TEST_F(Structs, PropertyIndependence) {
   std::string source = R"(
     struct Point {}
     let p1 = Point();
@@ -85,7 +81,7 @@ TEST_F(Classes, PropertyIndependence) {
   EXPECT_EQ(last_output(), "10\n30\n");
 }
 
-TEST_F(Classes, GetUndefinedPropertyError) {
+TEST_F(Structs, GetUndefinedPropertyError) {
   std::string source = R"(
     struct Obj {}
     let o = Obj();
@@ -94,9 +90,7 @@ TEST_F(Classes, GetUndefinedPropertyError) {
   EXPECT_THROW(run(source), Error);
 }
 
-// Instance Methods
-
-TEST_F(Classes, BasicMethod) {
+TEST_F(Structs, BasicMethod) {
   std::string source = R"(
     struct Greeter {
       greet() {
@@ -110,7 +104,7 @@ TEST_F(Classes, BasicMethod) {
   EXPECT_EQ(last_output(), "hello\n");
 }
 
-TEST_F(Classes, MethodWithParams) {
+TEST_F(Structs, MethodWithParams) {
   std::string source = R"(
     struct Math {
       add(a, b) {
@@ -124,7 +118,7 @@ TEST_F(Classes, MethodWithParams) {
   EXPECT_EQ(last_output(), "7\n");
 }
 
-TEST_F(Classes, MethodReturnsValue) {
+TEST_F(Structs, MethodReturnsValue) {
   std::string source = R"(
     struct Calculator {
       square(n) {
@@ -138,7 +132,7 @@ TEST_F(Classes, MethodReturnsValue) {
   EXPECT_EQ(last_output(), "25\n");
 }
 
-TEST_F(Classes, MethodAccessesThis) {
+TEST_F(Structs, MethodAccessesThis) {
   std::string source = R"(
     struct Person {
       getName() {
@@ -153,7 +147,7 @@ TEST_F(Classes, MethodAccessesThis) {
   EXPECT_EQ(last_output(), "Alice\n");
 }
 
-TEST_F(Classes, MethodModifiesThis) {
+TEST_F(Structs, MethodModifiesThis) {
   std::string source = R"(
     struct Counter {
       increment() {
@@ -170,7 +164,7 @@ TEST_F(Classes, MethodModifiesThis) {
   EXPECT_EQ(last_output(), "2\n");
 }
 
-TEST_F(Classes, ChainedMethodCalls) {
+TEST_F(Structs, ChainedMethodCalls) {
   std::string source = R"(
     struct Builder {
       setX(x) {
@@ -192,7 +186,7 @@ TEST_F(Classes, ChainedMethodCalls) {
   EXPECT_EQ(last_output(), "30\n");
 }
 
-TEST_F(Classes, MethodCallsOtherMethod) {
+TEST_F(Structs, MethodCallsOtherMethod) {
   std::string source = R"(
     struct Math {
       double(n) {
@@ -209,7 +203,7 @@ TEST_F(Classes, MethodCallsOtherMethod) {
   EXPECT_EQ(last_output(), "20\n");
 }
 
-TEST_F(Classes, MultipleMethods) {
+TEST_F(Structs, MultipleMethods) {
   std::string source = R"(
     struct Account {
       deposit(amount) {
@@ -232,7 +226,7 @@ TEST_F(Classes, MultipleMethods) {
   EXPECT_EQ(last_output(), "120\n");
 }
 
-TEST_F(Classes, FluentInterface) {
+TEST_F(Structs, FluentInterface) {
   std::string source = R"(
     struct Calc {
       init() { self.value = 0; }
@@ -245,7 +239,7 @@ TEST_F(Classes, FluentInterface) {
   EXPECT_EQ(last_output(), "17\n");
 }
 
-TEST_F(Classes, PropertyShadowsMethod) {
+TEST_F(Structs, PropertyShadowsMethod) {
   std::string source = R"(
     struct A {
       m() { print("method"); }

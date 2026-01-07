@@ -19,8 +19,6 @@ using namespace seam::tests;
 
 struct ControlFlow : public fixtures::Execution {};
 
-// If Statements
-
 TEST_F(ControlFlow, IfTrue) {
   std::string source = R"(
     if (true) print("yes");
@@ -98,8 +96,6 @@ TEST_F(ControlFlow, IfConditionExpression) {
   EXPECT_EQ(last_output(), "big\n");
 }
 
-// While Loops
-
 TEST_F(ControlFlow, WhileBasic) {
   std::string source = R"(
     let i = 1;
@@ -146,8 +142,6 @@ TEST_F(ControlFlow, WhileConditionUpdate) {
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "3\n");
 }
-
-// For Loops
 
 TEST_F(ControlFlow, ForBasic) {
   std::string source = R"(

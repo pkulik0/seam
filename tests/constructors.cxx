@@ -149,8 +149,6 @@ TEST_F(Constructors, InitSetsMultipleProperties) {
   EXPECT_EQ(last_output(), "John\nDoe\nJohn Doe\n");
 }
 
-// Error Cases
-
 TEST_F(Constructors, InitWrongArity) {
   std::string source = R"(
     struct Point {

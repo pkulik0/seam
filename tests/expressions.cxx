@@ -19,8 +19,6 @@ using namespace seam::tests;
 
 struct Expressions : public fixtures::Execution {};
 
-// Arithmetic Operators
-
 TEST_F(Expressions, Addition) {
   std::string source = R"(
     print(5 + 3);
@@ -84,8 +82,6 @@ TEST_F(Expressions, ComplexExpression) {
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "6\n");
 }
-
-// Comparison Operators
 
 TEST_F(Expressions, GreaterThan) {
   std::string source = R"(
@@ -175,8 +171,6 @@ TEST_F(Expressions, DifferentTypesNotEqual) {
   EXPECT_EQ(last_output(), "false\n");
 }
 
-// String Concatenation
-
 TEST_F(Expressions, StringConcat) {
   std::string source = R"(
     print("Hello, " + "World!");
@@ -184,8 +178,6 @@ TEST_F(Expressions, StringConcat) {
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Hello, World!\n");
 }
-
-// Unary Operators
 
 TEST_F(Expressions, Negation) {
   std::string source = R"(
@@ -249,8 +241,6 @@ TEST_F(Expressions, TruthyTrue) {
   EXPECT_EQ(last_output(), "truthy\n");
 }
 
-// Ternary Operator
-
 TEST_F(Expressions, TernaryTrue) {
   std::string source = R"(
     print(true ? "yes" : "no");
@@ -282,8 +272,6 @@ TEST_F(Expressions, TernaryWithExpression) {
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "big\n");
 }
-
-// Logical Operators
 
 TEST_F(Expressions, AndTrueTrue) {
   std::string source = R"(
@@ -344,8 +332,6 @@ TEST_F(Expressions, LogicalReturnsValue) {
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "default\n");
 }
-
-// Error Cases
 
 TEST_F(Expressions, SubtractStringsError) {
   std::string source = R"(

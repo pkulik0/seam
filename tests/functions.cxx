@@ -19,8 +19,6 @@ using namespace seam::tests;
 
 struct Functions : public fixtures::Execution {};
 
-// Basic Functions
-
 TEST_F(Functions, NoParams) {
   std::string source = R"(
     fn greet() {
