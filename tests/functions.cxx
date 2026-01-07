@@ -17,13 +17,13 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class Functions : public fixtures::Execution {};
+struct Functions : public fixtures::Execution {};
 
 // Basic Functions
 
 TEST_F(Functions, NoParams) {
   std::string source = R"(
-    fun greet() {
+    fn greet() {
       print "hi";
     }
     greet();
@@ -34,7 +34,7 @@ TEST_F(Functions, NoParams) {
 
 TEST_F(Functions, WithParams) {
   std::string source = R"(
-    fun add(a, b) {
+    fn add(a, b) {
       print a + b;
     }
     add(2, 3);
@@ -45,7 +45,7 @@ TEST_F(Functions, WithParams) {
 
 TEST_F(Functions, ReturnValue) {
   std::string source = R"(
-    fun double(x) {
+    fn double(x) {
       return x * 2;
     }
     print double(5);
@@ -56,7 +56,7 @@ TEST_F(Functions, ReturnValue) {
 
 TEST_F(Functions, ReturnFromBlock) {
   std::string source = R"(
-    fun test() {
+    fn test() {
       {
         return "from block";
       }
@@ -69,7 +69,7 @@ TEST_F(Functions, ReturnFromBlock) {
 
 TEST_F(Functions, EarlyReturnWithLiteral) {
   std::string source = R"(
-    fun earlyExit() {
+    fn earlyExit() {
       if (true) return "early";
       return "late";
     }
@@ -81,7 +81,7 @@ TEST_F(Functions, EarlyReturnWithLiteral) {
 
 TEST_F(Functions, MultipleParams) {
   std::string source = R"(
-    fun sum(a, b, c, d, e) {
+    fn sum(a, b, c, d, e) {
       return a + b + c + d + e;
     }
     print sum(1, 2, 3, 4, 5);
@@ -92,12 +92,12 @@ TEST_F(Functions, MultipleParams) {
 
 TEST_F(Functions, MutualRecursion) {
   std::string source = R"(
-    fun isEven(n) {
+    fn isEven(n) {
       if (n == 0) return true;
       return isOdd(n - 1);
     }
 
-    fun isOdd(n) {
+    fn isOdd(n) {
       if (n == 0) return false;
       return isEven(n - 1);
     }
@@ -111,7 +111,7 @@ TEST_F(Functions, MutualRecursion) {
 
 TEST_F(Functions, DeepRecursion) {
   std::string source = R"(
-    fun fib(n) {
+    fn fib(n) {
       if (n <= 1) return n;
       return fib(n - 1) + fib(n - 2);
     }
@@ -123,9 +123,9 @@ TEST_F(Functions, DeepRecursion) {
 
 TEST_F(Functions, LocalShadowingInBlock) {
   std::string source = R"(
-    fun test(x) {
+    fn test(x) {
       {
-        var x = "shadow";
+        let x = "shadow";
         print x;
       }
       print x;
@@ -138,7 +138,7 @@ TEST_F(Functions, LocalShadowingInBlock) {
 
 TEST_F(Functions, DuplicateParamError) {
   std::string source = R"(
-    fun test(x, x) {
+    fn test(x, x) {
       print x;
     }
   )";
@@ -149,15 +149,15 @@ TEST_F(Functions, DuplicateParamError) {
 
 TEST_F(Functions, RecursiveClosureShadowing) {
   std::string source = R"(
-    fun makeCounter(x) {
-      if (x <= 0) return fun() { return 0; };
-      var next = makeCounter(x - 1);
-      return fun() {
-        var y = x;
+    fn makeCounter(x) {
+      if (x <= 0) return fn() { return 0; };
+      let next = makeCounter(x - 1);
+      return fn() {
+        let y = x;
         return y + next();
       };
     }
-    var sum = makeCounter(5);
+    let sum = makeCounter(5);
     print sum();
   )";
   EXPECT_NO_THROW(run(source));
@@ -166,8 +166,8 @@ TEST_F(Functions, RecursiveClosureShadowing) {
 
 TEST_F(Functions, ShadowingGlobal) {
   std::string source = R"(
-    var x = "global";
-    fun test(x) {
+    let x = "global";
+    fn test(x) {
       print x;
     }
     test("param");
@@ -179,8 +179,8 @@ TEST_F(Functions, ShadowingGlobal) {
 
 TEST_F(Functions, AccessGlobal) {
   std::string source = R"(
-    var x = "global";
-    fun test() {
+    let x = "global";
+    fn test() {
       print x;
     }
     test();
@@ -191,8 +191,8 @@ TEST_F(Functions, AccessGlobal) {
 
 TEST_F(Functions, ModifyGlobal) {
   std::string source = R"(
-    var x = 1;
-    fun increment() {
+    let x = 1;
+    fn increment() {
       x = x + 1;
     }
     increment();
@@ -207,7 +207,7 @@ TEST_F(Functions, ModifyGlobal) {
 
 TEST_F(Functions, WrongArity) {
   std::string source = R"(
-    fun add(a, b) {
+    fn add(a, b) {
       return a + b;
     }
     add(1);
@@ -217,7 +217,7 @@ TEST_F(Functions, WrongArity) {
 
 TEST_F(Functions, TooManyArgs) {
   std::string source = R"(
-    fun add(a, b) {
+    fn add(a, b) {
       return a + b;
     }
     add(1, 2, 3);
@@ -227,7 +227,7 @@ TEST_F(Functions, TooManyArgs) {
 
 TEST_F(Functions, CallNonFunction) {
   std::string source = R"(
-    var x = 5;
+    let x = 5;
     x();
   )";
   EXPECT_THROW(run(source), Error);
@@ -235,7 +235,7 @@ TEST_F(Functions, CallNonFunction) {
 
 TEST_F(Functions, UndefinedFunction) {
   std::string source = R"(
-    undefinedFunc();
+    undefinedFunctionc();
   )";
   EXPECT_THROW(run(source), Error);
 }
@@ -249,10 +249,10 @@ TEST_F(Functions, ReturnOutsideFunction) {
 
 TEST_F(Functions, FunctionAsValue) {
   std::string source = R"(
-    fun greet() {
+    fn greet() {
       return "hello";
     }
-    var f = greet;
+    let f = greet;
     print f();
   )";
   EXPECT_NO_THROW(run(source));
@@ -261,10 +261,10 @@ TEST_F(Functions, FunctionAsValue) {
 
 TEST_F(Functions, PassFunctionAsArgument) {
   std::string source = R"(
-    fun apply(f, x) {
+    fn apply(f, x) {
       return f(x);
     }
-    fun double(n) {
+    fn double(n) {
       return n * 2;
     }
     print apply(double, 5);

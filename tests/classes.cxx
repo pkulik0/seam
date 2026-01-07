@@ -17,25 +17,25 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class Classes : public fixtures::Execution {};
+struct Classes : public fixtures::Execution {};
 
-// Class Declaration and Instantiation
+// Struct Declaration and Instantiation
 
-TEST_F(Classes, EmptyClass) {
+TEST_F(Classes, EmptyStruct) {
   std::string source = R"(
-    class Foo {}
-    var f = Foo();
+    struct Foo {}
+    let f = Foo();
     print f;
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Foo instance\n");
 }
 
-TEST_F(Classes, ClassAsValue) {
+TEST_F(Classes, StructAsValue) {
   std::string source = R"(
-    class Foo {}
-    var cls = Foo;
-    var instance = cls();
+    struct Foo {}
+    let cls = Foo;
+    let instance = cls();
     print instance;
   )";
   EXPECT_NO_THROW(run(source));
@@ -44,9 +44,9 @@ TEST_F(Classes, ClassAsValue) {
 
 TEST_F(Classes, MultipleInstances) {
   std::string source = R"(
-    class Counter {}
-    var a = Counter();
-    var b = Counter();
+    struct Counter {}
+    let a = Counter();
+    let b = Counter();
     a.count = 1;
     b.count = 2;
     print a.count;
@@ -60,8 +60,8 @@ TEST_F(Classes, MultipleInstances) {
 
 TEST_F(Classes, SetProperty) {
   std::string source = R"(
-    class Obj {}
-    var o = Obj();
+    struct Obj {}
+    let o = Obj();
     o.x = 5;
     print o.x;
   )";
@@ -71,9 +71,9 @@ TEST_F(Classes, SetProperty) {
 
 TEST_F(Classes, PropertyIndependence) {
   std::string source = R"(
-    class Point {}
-    var p1 = Point();
-    var p2 = Point();
+    struct Point {}
+    let p1 = Point();
+    let p2 = Point();
     p1.x = 10;
     p1.y = 20;
     p2.x = 30;
@@ -87,8 +87,8 @@ TEST_F(Classes, PropertyIndependence) {
 
 TEST_F(Classes, GetUndefinedPropertyError) {
   std::string source = R"(
-    class Obj {}
-    var o = Obj();
+    struct Obj {}
+    let o = Obj();
     print o.undefined;
   )";
   EXPECT_THROW(run(source), Error);
@@ -98,12 +98,12 @@ TEST_F(Classes, GetUndefinedPropertyError) {
 
 TEST_F(Classes, BasicMethod) {
   std::string source = R"(
-    class Greeter {
+    struct Greeter {
       greet() {
         print "hello";
       }
     }
-    var g = Greeter();
+    let g = Greeter();
     g.greet();
   )";
   EXPECT_NO_THROW(run(source));
@@ -112,12 +112,12 @@ TEST_F(Classes, BasicMethod) {
 
 TEST_F(Classes, MethodWithParams) {
   std::string source = R"(
-    class Math {
+    struct Math {
       add(a, b) {
         return a + b;
       }
     }
-    var m = Math();
+    let m = Math();
     print m.add(3, 4);
   )";
   EXPECT_NO_THROW(run(source));
@@ -126,12 +126,12 @@ TEST_F(Classes, MethodWithParams) {
 
 TEST_F(Classes, MethodReturnsValue) {
   std::string source = R"(
-    class Calculator {
+    struct Calculator {
       square(n) {
         return n * n;
       }
     }
-    var c = Calculator();
+    let c = Calculator();
     print c.square(5);
   )";
   EXPECT_NO_THROW(run(source));
@@ -140,12 +140,12 @@ TEST_F(Classes, MethodReturnsValue) {
 
 TEST_F(Classes, MethodAccessesThis) {
   std::string source = R"(
-    class Person {
+    struct Person {
       getName() {
-        return this.name;
+        return self.name;
       }
     }
-    var p = Person();
+    let p = Person();
     p.name = "Alice";
     print p.getName();
   )";
@@ -155,12 +155,12 @@ TEST_F(Classes, MethodAccessesThis) {
 
 TEST_F(Classes, MethodModifiesThis) {
   std::string source = R"(
-    class Counter {
+    struct Counter {
       increment() {
-        this.count = this.count + 1;
+        self.count = self.count + 1;
       }
     }
-    var c = Counter();
+    let c = Counter();
     c.count = 0;
     c.increment();
     c.increment();
@@ -172,20 +172,20 @@ TEST_F(Classes, MethodModifiesThis) {
 
 TEST_F(Classes, ChainedMethodCalls) {
   std::string source = R"(
-    class Builder {
+    struct Builder {
       setX(x) {
-        this.x = x;
-        return this;
+        self.x = x;
+        return self;
       }
       setY(y) {
-        this.y = y;
-        return this;
+        self.y = y;
+        return self;
       }
       build() {
-        return this.x + this.y;
+        return self.x + self.y;
       }
     }
-    var b = Builder();
+    let b = Builder();
     print b.setX(10).setY(20).build();
   )";
   EXPECT_NO_THROW(run(source));
@@ -194,15 +194,15 @@ TEST_F(Classes, ChainedMethodCalls) {
 
 TEST_F(Classes, MethodCallsOtherMethod) {
   std::string source = R"(
-    class Math {
+    struct Math {
       double(n) {
         return n * 2;
       }
       quadruple(n) {
-        return this.double(this.double(n));
+        return self.double(self.double(n));
       }
     }
-    var m = Math();
+    let m = Math();
     print m.quadruple(5);
   )";
   EXPECT_NO_THROW(run(source));
@@ -211,18 +211,18 @@ TEST_F(Classes, MethodCallsOtherMethod) {
 
 TEST_F(Classes, MultipleMethods) {
   std::string source = R"(
-    class Account {
+    struct Account {
       deposit(amount) {
-        this.balance = this.balance + amount;
+        self.balance = self.balance + amount;
       }
       withdraw(amount) {
-        this.balance = this.balance - amount;
+        self.balance = self.balance - amount;
       }
       getBalance() {
-        return this.balance;
+        return self.balance;
       }
     }
-    var acc = Account();
+    let acc = Account();
     acc.balance = 100;
     acc.deposit(50);
     acc.withdraw(30);
@@ -234,10 +234,10 @@ TEST_F(Classes, MultipleMethods) {
 
 TEST_F(Classes, FluentInterface) {
   std::string source = R"(
-    class Calc {
-      init() { this.value = 0; }
-      add(n) { this.value = this.value + n; return this; }
-      mul(n) { this.value = this.value * n; return this; }
+    struct Calc {
+      init() { self.value = 0; }
+      add(n) { self.value = self.value + n; return self; }
+      mul(n) { self.value = self.value * n; return self; }
     }
     print Calc().add(5).mul(3).add(2).value;
   )";
@@ -247,10 +247,10 @@ TEST_F(Classes, FluentInterface) {
 
 TEST_F(Classes, PropertyShadowsMethod) {
   std::string source = R"(
-    class A {
+    struct A {
       m() { print "method"; }
     }
-    var a = A();
+    let a = A();
     a.m = "property";
     print a.m;
   )";

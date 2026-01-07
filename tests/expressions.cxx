@@ -17,7 +17,7 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class Expressions : public fixtures::Execution {};
+struct Expressions : public fixtures::Execution {};
 
 // Arithmetic Operators
 
@@ -189,7 +189,7 @@ TEST_F(Expressions, StringConcat) {
 
 TEST_F(Expressions, Negation) {
   std::string source = R"(
-    var x = 0 - 5;
+    let x = 0 - 5;
     print x;
   )";
   EXPECT_NO_THROW(run(source));
@@ -198,7 +198,7 @@ TEST_F(Expressions, Negation) {
 
 TEST_F(Expressions, DoubleNegation) {
   std::string source = R"(
-    var x = 0 - 0 - 5;
+    let x = 0 - 0 - 5;
     print x;
   )";
   EXPECT_NO_THROW(run(source));
@@ -303,7 +303,7 @@ TEST_F(Expressions, AndTrueFalse) {
 
 TEST_F(Expressions, AndShortCircuit) {
   std::string source = R"(
-    var x = 0;
+    let x = 0;
     false and (x = 1);
     print x;
   )";
@@ -329,7 +329,7 @@ TEST_F(Expressions, OrTrueFalse) {
 
 TEST_F(Expressions, OrShortCircuit) {
   std::string source = R"(
-    var x = 0;
+    let x = 0;
     true or (x = 1);
     print x;
   )";
@@ -356,7 +356,7 @@ TEST_F(Expressions, SubtractStringsError) {
 
 TEST_F(Expressions, NegateStringError) {
   std::string source = R"(
-    var s = "not a number";
+    let s = "not a number";
     print -s;
   )";
   EXPECT_THROW(run(source), Error);
@@ -387,8 +387,8 @@ TEST_F(Expressions, UnaryBang) {
 
 TEST_F(Expressions, LogicalShortCircuitSideEffects) {
   std::string source = R"(
-    var x = 0;
-    fun increment() {
+    let x = 0;
+    fn increment() {
       x = x + 1;
       return true;
     }

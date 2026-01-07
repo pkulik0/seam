@@ -23,19 +23,19 @@ struct Grouping;
 struct Literal;
 struct Unary;
 struct Ternary;
-struct Variable;
+struct LetExpr;
 struct Assignment;
 struct Logical;
 struct Call;
-struct FunctionExpression;
+struct FnExpression;
 struct Get;
 struct Set;
-struct ThisExpr;
+struct SelfExpr;
 struct Super;
 // TODO: Move those that can be moved above Expression to avoid predeclaration.
 
 using Expression = std::variant<Binary, Grouping, Literal, Unary, Ternary,
-                                Variable, Assignment, Logical, Call, FunctionExpression, Get, Set, ThisExpr, Super>;
+                                LetExpr, Assignment, Logical, Call, FnExpression, Get, Set, SelfExpr, Super>;
 
 struct Super {
   Token keyword;
@@ -53,13 +53,13 @@ struct Set {
   std::unique_ptr<Expression> value;
 };
 
-struct ThisExpr {
+struct SelfExpr {
   Token keyword;
 };
 
 struct BlockStatement;
 
-struct FunctionExpression {
+struct FnExpression {
   std::vector<Token> parameters;
   std::unique_ptr<BlockStatement> body;
 };
@@ -101,7 +101,7 @@ struct Ternary {
   std::unique_ptr<Expression> false_expr;
 };
 
-struct Variable {
+struct LetExpr {
   Token name;
 };
 
@@ -132,25 +132,25 @@ using Statement = std::variant<PrintStatement, Expression, BlockStatement,
                                IfStatement, WhileStatement, ForStatement,
                                ReturnStatement>;
 
-struct VariableDeclaration {
+struct LetDeclaration {
   Token name;
   std::unique_ptr<Expression> initializer;
 };
 
-struct FunctionDeclaration {
+struct FnDeclaration {
   Token name;
   std::vector<Token> parameters;
   std::unique_ptr<BlockStatement> body;
   bool is_static = false;
 };
 
-struct ClassDeclaration {
+struct StructDeclaration {
   Token name;
-  std::unique_ptr<Variable> superclass;
-  std::vector<std::unique_ptr<FunctionDeclaration>> methods;
+  std::unique_ptr<LetExpr> parent;
+  std::vector<std::unique_ptr<FnDeclaration>> methods;
 };
 
-using Declaration = std::variant<VariableDeclaration, Statement, FunctionDeclaration, ClassDeclaration>;
+using Declaration = std::variant<LetDeclaration, Statement, FnDeclaration, StructDeclaration>;
 
 struct IfStatement {
   std::unique_ptr<Expression> condition;
@@ -230,7 +230,7 @@ private:
               return parenthesize("?:", *e.condition, *e.true_expr,
                                   *e.false_expr);
             },
-            [](const Variable &e) -> std::string {
+            [](const LetExpr &e) -> std::string {
               return std::string(e.name.lexeme());
             },
             [this](const Assignment &e) -> std::string {
@@ -246,12 +246,12 @@ private:
               }
               return result + ")";
             },
-            [this](const FunctionExpression &e) -> std::string {
+            [this](const FnExpression &e) -> std::string {
               std::string params;
               for (const auto &param : e.parameters) {
                 params += std::string(param.lexeme()) + ", ";
               }
-              return std::format("fun({}) {}", params, print_block(*e.body));
+              return std::format("fn({}) {}", params, print_block(*e.body));
             },
             [this](const Get &e) -> std::string {
               return std::format("({}.{})", print_expression(*e.object), e.name.lexeme());
@@ -259,11 +259,11 @@ private:
             [this](const Set &e) -> std::string {
               return std::format("({}.{}) = {}", print_expression(*e.object), e.name.lexeme(), print_expression(*e.value));
             },
-            [](const ThisExpr &) -> std::string {
-              return "this";
+            [](const SelfExpr &) -> std::string {
+              return "self";
             },
             [](const Super &s) -> std::string {
-              return std::format("super.{}", s.method.lexeme());
+              return std::format("parent.{}", s.method.lexeme());
             },
         },
         expr);
@@ -317,34 +317,34 @@ private:
         statement);
   }
 
-  std::string print_function_declaration(const FunctionDeclaration &f) const {
+  std::string print_fn_declaration(const FnDeclaration &f) const {
     std::string params;
     for (const auto &param : f.parameters) {
       params += std::string(param.lexeme()) + ", ";
     }
-    return std::format("{}func {}({}) {}", f.is_static ? "static " : "", f.name.lexeme(), params, print_block(*f.body));
+    return std::format("{}fn {}({}) {}", f.is_static ? "static " : "", f.name.lexeme(), params, print_block(*f.body));
   }
 
   std::string print_declaration(const Declaration &declaration) const {
     return std::visit(overload{
-                          [this](const VariableDeclaration &d) -> std::string {
+                          [this](const LetDeclaration &d) -> std::string {
                             return std::format(
-                                "var {}: {}", d.name.lexeme(),
+                                "let {}: {}", d.name.lexeme(),
                                 print_expression(*d.initializer));
                           },
                           [this](const Statement &s) -> std::string {
                             return print_statement(s);
                           },
-                          [this](const FunctionDeclaration &f) -> std::string {
-                            return print_function_declaration(f);
+                          [this](const FnDeclaration &f) -> std::string {
+                            return print_fn_declaration(f);
                           },
-                          [this](const ClassDeclaration &c) -> std::string {
+                          [this](const StructDeclaration &c) -> std::string {
                             std::string methods;
                             for (const auto &method : c.methods) {
-                              methods += std::format("{}", print_function_declaration(*method));
+                              methods += std::format("{}", print_fn_declaration(*method));
                             }
-                            std::string superclass = c.superclass ? std::format("+ {}", c.superclass->name.lexeme()) : "";
-                            return std::format("class {} {} {{{}\n}}", c.name.lexeme(), superclass, methods);
+                            std::string parent = c.parent ? std::format("+ {}", c.parent->name.lexeme()) : "";
+                            return std::format("struct {} {} {{{}\n}}", c.name.lexeme(), parent, methods);
                           },
                       },
                       declaration);

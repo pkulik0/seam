@@ -63,14 +63,14 @@ private:
 
   const inline static std::unordered_map<std::string_view, token::Type>
       keywords = {
-          {"and", token::Type::AND},       {"class", token::Type::CLASS},
+          {"and", token::Type::AND},       {"struct", token::Type::STRUCT},
           {"else", token::Type::ELSE},     {"false", token::Type::FALSE},
-          {"fun", token::Type::FUN},       {"for", token::Type::FOR},
+          {"fn", token::Type::FN},         {"for", token::Type::FOR},
           {"if", token::Type::IF},         {"nil", token::Type::NIL},
           {"or", token::Type::OR},         {"print", token::Type::PRINT},
-          {"return", token::Type::RETURN}, {"static", token::Type::STATIC}, {"super", token::Type::SUPER},
-          {"this", token::Type::THIS},     {"true", token::Type::TRUE},
-          {"var", token::Type::VAR},       {"while", token::Type::WHILE},
+          {"return", token::Type::RETURN}, {"static", token::Type::STATIC}, {"parent", token::Type::PARENT},
+          {"self", token::Type::SELF},     {"true", token::Type::TRUE},
+          {"let", token::Type::LET},       {"while", token::Type::WHILE},
   };
 
   usize m_start = 0;

@@ -128,16 +128,16 @@ TEST(Scanner, ScansKeywords) {
 }
 
 TEST(Scanner, ScansLineComments) {
-  scanner::Scanner scanner{"// this is a comment\nvar x"};
+  scanner::Scanner scanner{"// self is a comment\nlet x"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 4); // comment + var + identifier + EOF
+  ASSERT_EQ(tokens.size(), 4); // comment + let + identifier + EOF
   EXPECT_EQ(tokens[0].type(), token::Type::COMMENT);
-  EXPECT_EQ(tokens[0].lexeme(), "// this is a comment");
+  EXPECT_EQ(tokens[0].lexeme(), "// self is a comment");
   ASSERT_TRUE(tokens[0].literal().has_value());
-  EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), " this is a comment");
-  EXPECT_EQ(tokens[1].type(), token::Type::VAR);
-  EXPECT_EQ(tokens[1].lexeme(), "var");
+  EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), " self is a comment");
+  EXPECT_EQ(tokens[1].type(), token::Type::LET);
+  EXPECT_EQ(tokens[1].lexeme(), "let");
   EXPECT_EQ(tokens[2].type(), token::Type::IDENTIFIER);
   EXPECT_EQ(tokens[2].lexeme(), "x");
   ASSERT_TRUE(tokens[2].literal().has_value());
@@ -147,70 +147,70 @@ TEST(Scanner, ScansLineComments) {
 }
 
 TEST(Scanner, ScansMultilineComments) {
-  scanner::Scanner scanner{"/* comment */ var"};
+  scanner::Scanner scanner{"/* comment */ let"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 3); // comment + var + EOF
+  ASSERT_EQ(tokens.size(), 3); // comment + let + EOF
   EXPECT_EQ(tokens[0].type(), token::Type::COMMENT);
   EXPECT_EQ(tokens[0].lexeme(), "/* comment */");
   ASSERT_TRUE(tokens[0].literal().has_value());
   EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), " comment ");
-  EXPECT_EQ(tokens[1].type(), token::Type::VAR);
-  EXPECT_EQ(tokens[1].lexeme(), "var");
+  EXPECT_EQ(tokens[1].type(), token::Type::LET);
+  EXPECT_EQ(tokens[1].lexeme(), "let");
   EXPECT_EQ(tokens[2].type(), token::Type::END_OF_FILE);
   EXPECT_EQ(tokens[2].lexeme(), "");
 }
 
 TEST(Scanner, ScansMultilineCommentsWithNewlines) {
-  scanner::Scanner scanner{"/* this is a\nmultiline\ncomment */ var"};
+  scanner::Scanner scanner{"/* self is a\nmultiline\ncomment */ let"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 3); // comment + var + EOF
+  ASSERT_EQ(tokens.size(), 3); // comment + let + EOF
   EXPECT_EQ(tokens[0].type(), token::Type::COMMENT);
-  EXPECT_EQ(tokens[0].lexeme(), "/* this is a\nmultiline\ncomment */");
+  EXPECT_EQ(tokens[0].lexeme(), "/* self is a\nmultiline\ncomment */");
   ASSERT_TRUE(tokens[0].literal().has_value());
-  EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), " this is a\nmultiline\ncomment ");
-  EXPECT_EQ(tokens[1].type(), token::Type::VAR);
-  EXPECT_EQ(tokens[1].lexeme(), "var");
+  EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), " self is a\nmultiline\ncomment ");
+  EXPECT_EQ(tokens[1].type(), token::Type::LET);
+  EXPECT_EQ(tokens[1].lexeme(), "let");
   EXPECT_EQ(tokens[2].type(), token::Type::END_OF_FILE);
   EXPECT_EQ(tokens[2].lexeme(), "");
 }
 
 TEST(Scanner, ScansNestedMultilineComments) {
-  scanner::Scanner scanner{"/* outer /* inner */ still outer */ var"};
+  scanner::Scanner scanner{"/* outer /* inner */ still outer */ let"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 3); // comment + var + EOF
+  ASSERT_EQ(tokens.size(), 3); // comment + let + EOF
   EXPECT_EQ(tokens[0].type(), token::Type::COMMENT);
   EXPECT_EQ(tokens[0].lexeme(), "/* outer /* inner */ still outer */");
   ASSERT_TRUE(tokens[0].literal().has_value());
   EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), " outer /* inner */ still outer ");
-  EXPECT_EQ(tokens[1].type(), token::Type::VAR);
-  EXPECT_EQ(tokens[1].lexeme(), "var");
+  EXPECT_EQ(tokens[1].type(), token::Type::LET);
+  EXPECT_EQ(tokens[1].lexeme(), "let");
   EXPECT_EQ(tokens[2].type(), token::Type::END_OF_FILE);
   EXPECT_EQ(tokens[2].lexeme(), "");
 }
 
 TEST(Scanner, ScansMultipleNestedMultilineComments) {
-  scanner::Scanner scanner{"/* level 1 /* level 2 /* level 3 */ back to 2 */ back to 1 */ var"};
+  scanner::Scanner scanner{"/* level 1 /* level 2 /* level 3 */ back to 2 */ back to 1 */ let"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 3); // comment + var + EOF
+  ASSERT_EQ(tokens.size(), 3); // comment + let + EOF
   EXPECT_EQ(tokens[0].type(), token::Type::COMMENT);
   EXPECT_EQ(tokens[0].lexeme(), "/* level 1 /* level 2 /* level 3 */ back to 2 */ back to 1 */");
   ASSERT_TRUE(tokens[0].literal().has_value());
   EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), " level 1 /* level 2 /* level 3 */ back to 2 */ back to 1 ");
-  EXPECT_EQ(tokens[1].type(), token::Type::VAR);
-  EXPECT_EQ(tokens[1].lexeme(), "var");
+  EXPECT_EQ(tokens[1].type(), token::Type::LET);
+  EXPECT_EQ(tokens[1].lexeme(), "let");
   EXPECT_EQ(tokens[2].type(), token::Type::END_OF_FILE);
   EXPECT_EQ(tokens[2].lexeme(), "");
 }
 
 TEST(Scanner, ScansMixedComments) {
-  scanner::Scanner scanner{"// line comment\n/* block comment */ var // another line"};
+  scanner::Scanner scanner{"// line comment\n/* block comment */ let // another line"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 5); // line comment + block comment + var + line comment + EOF
+  ASSERT_EQ(tokens.size(), 5); // line comment + block comment + let + line comment + EOF
   EXPECT_EQ(tokens[0].type(), token::Type::COMMENT);
   EXPECT_EQ(tokens[0].lexeme(), "// line comment");
   ASSERT_TRUE(tokens[0].literal().has_value());
@@ -219,8 +219,8 @@ TEST(Scanner, ScansMixedComments) {
   EXPECT_EQ(tokens[1].lexeme(), "/* block comment */");
   ASSERT_TRUE(tokens[1].literal().has_value());
   EXPECT_EQ(std::any_cast<std::string_view>(tokens[1].literal().value()), " block comment ");
-  EXPECT_EQ(tokens[2].type(), token::Type::VAR);
-  EXPECT_EQ(tokens[2].lexeme(), "var");
+  EXPECT_EQ(tokens[2].type(), token::Type::LET);
+  EXPECT_EQ(tokens[2].lexeme(), "let");
   EXPECT_EQ(tokens[3].type(), token::Type::COMMENT);
   EXPECT_EQ(tokens[3].lexeme(), "// another line");
   ASSERT_TRUE(tokens[3].literal().has_value());
@@ -245,10 +245,10 @@ TEST(Scanner, ThrowsOnUnexpectedCharacter) {
 }
 
 TEST(Scanner, TracksLineAndColumnForSingleLineTokens) {
-  scanner::Scanner scanner{"var x = 42"};
+  scanner::Scanner scanner{"let x = 42"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 5); // var + x + = + 42 + EOF
+  ASSERT_EQ(tokens.size(), 5); // let + x + = + 42 + EOF
   EXPECT_EQ(tokens[0].line(), 1);
   EXPECT_EQ(tokens[0].column(), 1);
   EXPECT_EQ(tokens[1].line(), 1);
@@ -262,25 +262,25 @@ TEST(Scanner, TracksLineAndColumnForSingleLineTokens) {
 }
 
 TEST(Scanner, TracksLineAndColumnForMultiLineTokens) {
-  scanner::Scanner scanner{"var x\nvar y\nvar z"};
+  scanner::Scanner scanner{"let x\nlet y\nlet z"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 7); // var + x + var + y + var + z + EOF
+  ASSERT_EQ(tokens.size(), 7); // let + x + let + y + let + z + EOF
   EXPECT_EQ(tokens[0].line(), 1);
   EXPECT_EQ(tokens[0].column(), 1);
-  EXPECT_EQ(tokens[0].lexeme(), "var");
+  EXPECT_EQ(tokens[0].lexeme(), "let");
   EXPECT_EQ(tokens[1].line(), 1);
   EXPECT_EQ(tokens[1].column(), 5);
   EXPECT_EQ(tokens[1].lexeme(), "x");
   EXPECT_EQ(tokens[2].line(), 2);
   EXPECT_EQ(tokens[2].column(), 1);
-  EXPECT_EQ(tokens[2].lexeme(), "var");
+  EXPECT_EQ(tokens[2].lexeme(), "let");
   EXPECT_EQ(tokens[3].line(), 2);
   EXPECT_EQ(tokens[3].column(), 5);
   EXPECT_EQ(tokens[3].lexeme(), "y");
   EXPECT_EQ(tokens[4].line(), 3);
   EXPECT_EQ(tokens[4].column(), 1);
-  EXPECT_EQ(tokens[4].lexeme(), "var");
+  EXPECT_EQ(tokens[4].lexeme(), "let");
   EXPECT_EQ(tokens[5].line(), 3);
   EXPECT_EQ(tokens[5].column(), 5);
   EXPECT_EQ(tokens[5].lexeme(), "z");
@@ -297,28 +297,28 @@ TEST(Scanner, TracksLineAndColumnForMultiLineStrings) {
 }
 
 TEST(Scanner, TracksLineAndColumnForMultiLineComments) {
-  scanner::Scanner scanner{"/* line 1\nline 2\nline 3 */ var"};
+  scanner::Scanner scanner{"/* line 1\nline 2\nline 3 */ let"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 3); // comment + var + EOF
+  ASSERT_EQ(tokens.size(), 3); // comment + let + EOF
   EXPECT_EQ(tokens[0].line(), 1);
   EXPECT_EQ(tokens[0].column(), 1);
   EXPECT_EQ(tokens[0].type(), token::Type::COMMENT);
   EXPECT_EQ(tokens[1].line(), 3);
-  EXPECT_EQ(tokens[1].column(), 11); // var starts after "line 3 */ "
-  EXPECT_EQ(tokens[1].type(), token::Type::VAR);
+  EXPECT_EQ(tokens[1].column(), 11); // let starts after "line 3 */ "
+  EXPECT_EQ(tokens[1].type(), token::Type::LET);
 }
 
 TEST(Scanner, TracksLineAndColumnWithMixedWhitespace) {
-  scanner::Scanner scanner{"  var\t\tx  \n\t y"};
+  scanner::Scanner scanner{"  let\t\tx  \n\t y"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 4); // var + x + y + EOF
+  ASSERT_EQ(tokens.size(), 4); // let + x + y + EOF
   EXPECT_EQ(tokens[0].line(), 1);
   EXPECT_EQ(tokens[0].column(), 3);
-  EXPECT_EQ(tokens[0].lexeme(), "var");
+  EXPECT_EQ(tokens[0].lexeme(), "let");
   EXPECT_EQ(tokens[1].line(), 1);
-  EXPECT_EQ(tokens[1].column(), 8); // After "var" and two tabs
+  EXPECT_EQ(tokens[1].column(), 8); // After "let" and two tabs
   EXPECT_EQ(tokens[1].lexeme(), "x");
   EXPECT_EQ(tokens[2].line(), 2);
   EXPECT_EQ(tokens[2].column(), 3); // After one tab on line 2
@@ -399,17 +399,17 @@ TEST(Scanner, VerifiesTokenDataForNumberLiterals) {
 }
 
 TEST(Scanner, VerifiesTokenDataForIdentifiersAndKeywords) {
-  scanner::Scanner scanner{"myVar if else myFunc"};
+  scanner::Scanner scanner{"myLet if else myFunctionc"};
   auto tokens = scanner.scan_tokens();
 
   ASSERT_EQ(tokens.size(), 5);
 
   EXPECT_EQ(tokens[0].type(), token::Type::IDENTIFIER);
-  EXPECT_EQ(tokens[0].lexeme(), "myVar");
+  EXPECT_EQ(tokens[0].lexeme(), "myLet");
   EXPECT_EQ(tokens[0].line(), 1);
   EXPECT_EQ(tokens[0].column(), 1);
   ASSERT_TRUE(tokens[0].literal().has_value());
-  EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), "myVar");
+  EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), "myLet");
 
   EXPECT_EQ(tokens[1].type(), token::Type::IF);
   EXPECT_EQ(tokens[1].lexeme(), "if");
@@ -424,15 +424,15 @@ TEST(Scanner, VerifiesTokenDataForIdentifiersAndKeywords) {
   EXPECT_FALSE(tokens[2].literal().has_value());
 
   EXPECT_EQ(tokens[3].type(), token::Type::IDENTIFIER);
-  EXPECT_EQ(tokens[3].lexeme(), "myFunc");
+  EXPECT_EQ(tokens[3].lexeme(), "myFunctionc");
   EXPECT_EQ(tokens[3].line(), 1);
   EXPECT_EQ(tokens[3].column(), 15);
   ASSERT_TRUE(tokens[3].literal().has_value());
-  EXPECT_EQ(std::any_cast<std::string_view>(tokens[3].literal().value()), "myFunc");
+  EXPECT_EQ(std::any_cast<std::string_view>(tokens[3].literal().value()), "myFunctionc");
 }
 
 TEST(Scanner, VerifiesTokenDataForComments) {
-  scanner::Scanner scanner{"// comment\n/* block */\nvar"};
+  scanner::Scanner scanner{"// comment\n/* block */\nlet"};
   auto tokens = scanner.scan_tokens();
 
   ASSERT_EQ(tokens.size(), 4);
@@ -451,8 +451,8 @@ TEST(Scanner, VerifiesTokenDataForComments) {
   ASSERT_TRUE(tokens[1].literal().has_value());
   EXPECT_EQ(std::any_cast<std::string_view>(tokens[1].literal().value()), " block ");
 
-  EXPECT_EQ(tokens[2].type(), token::Type::VAR);
-  EXPECT_EQ(tokens[2].lexeme(), "var");
+  EXPECT_EQ(tokens[2].type(), token::Type::LET);
+  EXPECT_EQ(tokens[2].lexeme(), "let");
   EXPECT_EQ(tokens[2].line(), 3);
   EXPECT_EQ(tokens[2].column(), 1);
 }

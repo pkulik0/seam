@@ -16,7 +16,7 @@ using namespace seam;
 
 export namespace seam::tests::fixtures {
 
-class Execution : public ::testing::Test {
+struct Execution : public ::testing::Test {
 protected:
   std::stringstream m_out;
   interpreter::Interpreter interpreter{m_out};

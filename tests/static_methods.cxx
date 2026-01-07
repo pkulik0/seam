@@ -17,11 +17,11 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class StaticMethods : public fixtures::Execution {};
+struct StaticMethods : public fixtures::Execution {};
 
 TEST_F(StaticMethods, CanCallStaticMethod) {
   std::string source = R"(
-        class Math {
+        struct Math {
             static add(a, b) {
                 return a + b;
             }
@@ -34,9 +34,9 @@ TEST_F(StaticMethods, CanCallStaticMethod) {
 
 TEST_F(StaticMethods, StaticMethodCannotUseThis) {
   std::string source = R"(
-        class Math {
+        struct Math {
             static fail() {
-                print this;
+                print self;
             }
         }
     )";
@@ -45,20 +45,20 @@ TEST_F(StaticMethods, StaticMethodCannotUseThis) {
 
 TEST_F(StaticMethods, CannotCallStaticMethodOnInstance) {
   std::string source = R"(
-        class Math {
+        struct Math {
             static add(a, b) {
                 return a + b;
             }
         }
-        var m = Math();
+        let m = Math();
         print m.add(1, 2);
     )";
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(StaticMethods, CannotCallInstanceMethodOnClass) {
+TEST_F(StaticMethods, CannotCallInstanceMethodOnStruct) {
   std::string source = R"(
-        class Math {
+        struct Math {
             add(a, b) {
                 return a + b;
             }

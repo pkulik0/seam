@@ -17,41 +17,41 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class Super : public fixtures::Execution {};
+struct Parent : public fixtures::Execution {};
 
-TEST_F(Super, BasicInheritance) {
+TEST_F(Parent, BasicInheritance) {
   std::string source = R"(
-        class A {
+        struct A {
             method() {
                 return "A";
             }
         }
-        class B + A {
+        struct B + A {
             method() {
-                return "B" + super.method();
+                return "B" + parent.method();
             }
         }
-        var b = B();
+        let b = B();
         print b.method();
     )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "BA\n");
 }
 
-TEST_F(Super, InConstructor) {
+TEST_F(Parent, InConstructor) {
   std::string source = R"(
-        class A {
+        struct A {
             init(a) {
-                this.a = a;
+                self.a = a;
             }
         }
-        class B + A {
+        struct B + A {
             init(a, b) {
-                super.init(a);
-                this.b = b;
+                parent.init(a);
+                self.b = b;
             }
         }
-        var b = B("a", "b");
+        let b = B("a", "b");
         print b.a;
         print b.b;
     )";
@@ -59,49 +59,49 @@ TEST_F(Super, InConstructor) {
   EXPECT_EQ(last_output(), "a\nb\n");
 }
 
-TEST_F(Super, WithoutSuperclass) {
+TEST_F(Parent, WithoutSuperstruct) {
   std::string source = R"(
-        class A {
+        struct A {
             method() {
-                print super.method();
+                print parent.method();
             }
         }
     )";
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(Super, OutsideClass) {
+TEST_F(Parent, OutsideStruct) {
   std::string source = R"(
-        print super.method();
+        print parent.method();
     )";
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(Super, MethodDoesNotExist) {
+TEST_F(Parent, MethodDoesNotExist) {
   std::string source = R"(
-        class A {}
-        class B + A {
+        struct A {}
+        struct B + A {
             method() {
-                super.noMethod();
+                parent.noMethod();
             }
         }
-        var b = B();
+        let b = B();
         b.method();
     )";
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(Super, InheritFromNonClass) {
+TEST_F(Parent, InheritFromNonStruct) {
   std::string source = R"(
-        var NotAClass = "I am a string";
-        class B + NotAClass {}
+        let NotAStruct = "I am a string";
+        struct B + NotAStruct {}
     )";
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(Super, InheritFromSelf) {
+TEST_F(Parent, InheritFromSelf) {
   std::string source = R"(
-        class A + A {}
+        struct A + A {}
     )";
   EXPECT_THROW(run(source), Error);
 }

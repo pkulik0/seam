@@ -49,12 +49,12 @@ private:
     INITIALIZER,
     STATIC_METHOD
   };
-  enum class ClassType { NONE, CLASS, SUBCLASS };
+  enum class StructType { NONE, STRUCT, SUBSTRUCT };
 
   interpreter::Interpreter &m_interpreter;
   std::vector<std::unordered_map<std::string, bool>> m_scopes;
   FunctionType m_current_function = FunctionType::NONE;
-  ClassType m_current_class = ClassType::NONE;
+  StructType m_current_struct = StructType::NONE;
 
   void begin_scope() { m_scopes.emplace_back(); }
 
@@ -67,7 +67,7 @@ private:
     auto &scope = m_scopes.back();
     if (scope.contains(std::string{name.lexeme()})) {
       throw ResolutionError(name,
-                            "Already a variable with this name in this scope.");
+                            "Already a let with this name in this scope.");
     }
     scope[std::string{name.lexeme()}] = false;
   }
@@ -105,14 +105,14 @@ private:
               resolve(*e.true_expr);
               resolve(*e.false_expr);
             },
-            [this, expr_ptr](const Variable &e) -> void {
+            [this, expr_ptr](const LetExpr &e) -> void {
               if (!m_scopes.empty()) {
                 const auto &scope = m_scopes.back();
                 const auto it = scope.find(std::string{e.name.lexeme()});
                 if (it != scope.end() && it->second == false) {
                   throw ResolutionError(
                       e.name,
-                      "Can't read local variable in its own initializer.");
+                      "Can't read local let in its own initializer.");
                 }
               }
               resolve_local(expr_ptr, e.name);
@@ -131,7 +131,7 @@ private:
                 resolve(*arg);
               }
             },
-            [this](const FunctionExpression &e) -> void {
+            [this](const FnExpression &e) -> void {
               FunctionType enclosing_function = m_current_function;
               m_current_function = FunctionType::FUNCTION;
 
@@ -150,25 +150,25 @@ private:
               resolve(*e.value);
               resolve(*e.object);
             },
-            [this, expr_ptr](const ThisExpr &e) -> void {
-              if (m_current_class == ClassType::NONE) {
+            [this, expr_ptr](const SelfExpr &e) -> void {
+              if (m_current_struct == StructType::NONE) {
                 throw ResolutionError(e.keyword,
-                                      "Can't use 'this' outside of a class.");
+                                      "Can't use 'self' outside of a struct.");
               }
               if (m_current_function == FunctionType::STATIC_METHOD) {
                 throw ResolutionError(e.keyword,
-                                      "Can't use 'this' in a static method.");
+                                      "Can't use 'self' in a static method.");
               }
               resolve_local(expr_ptr, e.keyword);
             },
             [this, expr_ptr](const Super &e) -> void {
-              if (m_current_class == ClassType::NONE) {
+              if (m_current_struct == StructType::NONE) {
                 throw ResolutionError(e.keyword,
-                                      "Can't use 'super' outside of a class.");
+                                      "Can't use 'parent' outside of a struct.");
               }
-              if (m_current_class != ClassType::SUBCLASS) {
+              if (m_current_struct != StructType::SUBSTRUCT) {
                 throw ResolutionError(
-                    e.keyword, "Can't use 'super' in a class with no superclass.");
+                    e.keyword, "Can't use 'parent' in a struct with no parent.");
               }
               resolve_local(expr_ptr, e.keyword);
             },
@@ -176,7 +176,7 @@ private:
         expr);
   }
 
-  void resolve(const FunctionDeclaration &d, FunctionType type) {
+  void resolve(const FnDeclaration &d, FunctionType type) {
     declare(d.name);
     define(d.name);
 
@@ -246,7 +246,7 @@ private:
 
   void resolve(const Declaration &decl) {
     std::visit(overload{
-                   [this](const VariableDeclaration &d) -> void {
+                   [this](const LetDeclaration &d) -> void {
                      declare(d.name);
                      if (d.initializer) {
                        resolve(*d.initializer);
@@ -254,28 +254,28 @@ private:
                      define(d.name);
                    },
                    [this](const Statement &s) -> void { resolve(s); },
-                   [this](const FunctionDeclaration &d) -> void {
+                   [this](const FnDeclaration &d) -> void {
                      resolve(d, FunctionType::FUNCTION);
                    },
-                   [this](const ClassDeclaration &d) -> void {
-                     ClassType enclosing_class = m_current_class;
-                     m_current_class = ClassType::CLASS;
+                   [this](const StructDeclaration &d) -> void {
+                     StructType enclosing_struct = m_current_struct;
+                     m_current_struct = StructType::STRUCT;
 
                      declare(d.name);
                      define(d.name);
 
-                     if (d.superclass) {
-                       m_current_class = ClassType::SUBCLASS;
+                     if (d.parent) {
+                       m_current_struct = StructType::SUBSTRUCT;
 
-                       if (d.name.lexeme() == d.superclass->name.lexeme()) {
+                       if (d.name.lexeme() == d.parent->name.lexeme()) {
                          throw ResolutionError(
-                             d.superclass->name,
-                             "A class can't inherit from itself.");
+                             d.parent->name,
+                             "A struct can't inherit from itself.");
                        }
-                       resolve(Expression{*d.superclass});
+                       resolve(Expression{*d.parent});
 
                        begin_scope();
-                       m_scopes.back()["super"] = true;
+                       m_scopes.back()["parent"] = true;
                      }
 
                      for (const auto &method : d.methods) {
@@ -289,17 +289,17 @@ private:
                          resolve(*method, type);
                        } else {
                          begin_scope();
-                         m_scopes.back()["this"] = true;
+                         m_scopes.back()["self"] = true;
                          resolve(*method, type);
                          end_scope();
                        }
                      }
 
-                     if (d.superclass) {
+                     if (d.parent) {
                        end_scope();
                      }
 
-                     m_current_class = enclosing_class;
+                     m_current_struct = enclosing_struct;
                    },
                },
                decl);

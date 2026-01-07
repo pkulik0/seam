@@ -17,7 +17,7 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class PrintStatement : public fixtures::Execution {};
+struct PrintStatement : public fixtures::Execution {};
 
 TEST_F(PrintStatement, PrintNumber) {
   std::string source = R"(
@@ -77,7 +77,7 @@ TEST_F(PrintStatement, PrintExpression) {
 
 TEST_F(PrintStatement, PrintFunctionResult) {
   std::string source = R"(
-    fun double(n) { return n * 2; }
+    fn double(n) { return n * 2; }
     print double(21);
   )";
   EXPECT_NO_THROW(run(source));
@@ -102,9 +102,9 @@ TEST_F(PrintStatement, PrintEmptyString) {
   EXPECT_EQ(last_output(), "\n");
 }
 
-TEST_F(PrintStatement, PrintClass) {
+TEST_F(PrintStatement, PrintStruct) {
   std::string source = R"(
-    class Foo {}
+    struct Foo {}
     print Foo;
   )";
   EXPECT_NO_THROW(run(source));
@@ -113,7 +113,7 @@ TEST_F(PrintStatement, PrintClass) {
 
 TEST_F(PrintStatement, PrintInstance) {
   std::string source = R"(
-    class Bar {}
+    struct Bar {}
     print Bar();
   )";
   EXPECT_NO_THROW(run(source));

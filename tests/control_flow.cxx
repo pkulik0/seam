@@ -17,7 +17,7 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class ControlFlow : public fixtures::Execution {};
+struct ControlFlow : public fixtures::Execution {};
 
 // If Statements
 
@@ -80,7 +80,7 @@ TEST_F(ControlFlow, IfWithBlock) {
 
 TEST_F(ControlFlow, ElseIfChain) {
   std::string source = R"(
-    var x = 2;
+    let x = 2;
     if (x == 1) print "one";
     else if (x == 2) print "two";
     else if (x == 3) print "three";
@@ -102,7 +102,7 @@ TEST_F(ControlFlow, IfConditionExpression) {
 
 TEST_F(ControlFlow, WhileBasic) {
   std::string source = R"(
-    var i = 1;
+    let i = 1;
     while (i <= 3) {
       print i;
       i = i + 1;
@@ -122,7 +122,7 @@ TEST_F(ControlFlow, WhileNeverExecutes) {
 
 TEST_F(ControlFlow, WhileWithBlock) {
   std::string source = R"(
-    var i = 0;
+    let i = 0;
     while (i < 2) {
       print "a";
       print "b";
@@ -135,8 +135,8 @@ TEST_F(ControlFlow, WhileWithBlock) {
 
 TEST_F(ControlFlow, WhileConditionUpdate) {
   std::string source = R"(
-    var done = false;
-    var count = 0;
+    let done = false;
+    let count = 0;
     while (done == false) {
       count = count + 1;
       if (count >= 3) done = true;
@@ -151,7 +151,7 @@ TEST_F(ControlFlow, WhileConditionUpdate) {
 
 TEST_F(ControlFlow, ForBasic) {
   std::string source = R"(
-    var i = 0;
+    let i = 0;
     for (i = 0; i < 3; i = i + 1) print i;
   )";
   EXPECT_NO_THROW(run(source));
@@ -160,7 +160,7 @@ TEST_F(ControlFlow, ForBasic) {
 
 TEST_F(ControlFlow, ForNoInitializer) {
   std::string source = R"(
-    var i = 0;
+    let i = 0;
     for (; i < 3; i = i + 1) print i;
   )";
   EXPECT_NO_THROW(run(source));
@@ -169,7 +169,7 @@ TEST_F(ControlFlow, ForNoInitializer) {
 
 TEST_F(ControlFlow, ForExternalVariable) {
   std::string source = R"(
-    var i = 0;
+    let i = 0;
     for (i = 0; i < 3; i = i + 1) print i;
     print i;
   )";
@@ -179,7 +179,7 @@ TEST_F(ControlFlow, ForExternalVariable) {
 
 TEST_F(ControlFlow, ForWithBlock) {
   std::string source = R"(
-    var i = 0;
+    let i = 0;
     for (i = 0; i < 2; i = i + 1) {
       print "a";
       print i;
@@ -191,8 +191,8 @@ TEST_F(ControlFlow, ForWithBlock) {
 
 TEST_F(ControlFlow, NestedForLoops) {
   std::string source = R"(
-    var i = 0;
-    var j = 0;
+    let i = 0;
+    let j = 0;
     for (i = 0; i < 2; i = i + 1) {
       for (j = 0; j < 2; j = j + 1) {
         print i * 10 + j;
@@ -205,8 +205,8 @@ TEST_F(ControlFlow, NestedForLoops) {
 
 TEST_F(ControlFlow, ForScopeIsolation) {
   std::string source = R"(
-    var i = "global";
-    for (var i = 0; i < 2; i = i + 1) {
+    let i = "global";
+    for (let i = 0; i < 2; i = i + 1) {
       print i;
     }
     print i;
@@ -217,8 +217,8 @@ TEST_F(ControlFlow, ForScopeIsolation) {
 
 TEST_F(ControlFlow, ForBodyShadowing) {
   std::string source = R"(
-    for (var i = 0; i < 1; i = i + 1) {
-      var i = "shadow";
+    for (let i = 0; i < 1; i = i + 1) {
+      let i = "shadow";
       print i;
     }
   )";
@@ -228,8 +228,8 @@ TEST_F(ControlFlow, ForBodyShadowing) {
 
 TEST_F(ControlFlow, NestedForScopeShadowing) {
   std::string source = R"(
-    for (var i = 0; i < 2; i = i + 1) {
-      for (var i = 10; i < 11; i = i + 1) {
+    for (let i = 0; i < 2; i = i + 1) {
+      for (let i = 10; i < 11; i = i + 1) {
         print i;
       }
       print i;
@@ -241,7 +241,7 @@ TEST_F(ControlFlow, NestedForScopeShadowing) {
 
 TEST_F(ControlFlow, ForWithConditionOnly) {
   std::string source = R"(
-    var i = 0;
+    let i = 0;
     for (; i < 3;) {
       print i;
       i = i + 1;

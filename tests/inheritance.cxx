@@ -17,17 +17,17 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class Inheritance : public fixtures::Execution {};
+struct Inheritance : public fixtures::Execution {};
 
 TEST_F(Inheritance, InheritMethod) {
   std::string source = R"(
-    class Animal {
+    struct Animal {
       speak() {
         print "sound";
       }
     }
-    class Dog + Animal {}
-    var d = Dog();
+    struct Dog + Animal {}
+    let d = Dog();
     d.speak();
   )";
   EXPECT_NO_THROW(run(source));
@@ -36,17 +36,17 @@ TEST_F(Inheritance, InheritMethod) {
 
 TEST_F(Inheritance, OverrideMethod) {
   std::string source = R"(
-    class Animal {
+    struct Animal {
       speak() {
         print "generic sound";
       }
     }
-    class Dog + Animal {
+    struct Dog + Animal {
       speak() {
         print "bark";
       }
     }
-    var d = Dog();
+    let d = Dog();
     d.speak();
   )";
   EXPECT_NO_THROW(run(source));
@@ -55,7 +55,7 @@ TEST_F(Inheritance, OverrideMethod) {
 
 TEST_F(Inheritance, InheritMultipleMethods) {
   std::string source = R"(
-    class Shape {
+    struct Shape {
       getType() {
         return "shape";
       }
@@ -63,8 +63,8 @@ TEST_F(Inheritance, InheritMultipleMethods) {
         print "I am a shape";
       }
     }
-    class Circle + Shape {}
-    var c = Circle();
+    struct Circle + Shape {}
+    let c = Circle();
     print c.getType();
     c.describe();
   )";
@@ -74,13 +74,13 @@ TEST_F(Inheritance, InheritMultipleMethods) {
 
 TEST_F(Inheritance, InheritedMethodAccessesThis) {
   std::string source = R"(
-    class Animal {
+    struct Animal {
       getName() {
-        return this.name;
+        return self.name;
       }
     }
-    class Dog + Animal {}
-    var d = Dog();
+    struct Dog + Animal {}
+    let d = Dog();
     d.name = "Rex";
     print d.getName();
   )";
@@ -90,22 +90,22 @@ TEST_F(Inheritance, InheritedMethodAccessesThis) {
 
 TEST_F(Inheritance, MultiLevelInheritance) {
   std::string source = R"(
-    class A {
+    struct A {
       methodA() {
         print "A";
       }
     }
-    class B + A {
+    struct B + A {
       methodB() {
         print "B";
       }
     }
-    class C + B {
+    struct C + B {
       methodC() {
         print "C";
       }
     }
-    var c = C();
+    let c = C();
     c.methodA();
     c.methodB();
     c.methodC();
@@ -116,18 +116,18 @@ TEST_F(Inheritance, MultiLevelInheritance) {
 
 TEST_F(Inheritance, OverrideInChain) {
   std::string source = R"(
-    class A {
+    struct A {
       greet() {
         print "A";
       }
     }
-    class B + A {
+    struct B + A {
       greet() {
         print "B";
       }
     }
-    class C + B {}
-    var c = C();
+    struct C + B {}
+    let c = C();
     c.greet();
   )";
   EXPECT_NO_THROW(run(source));
@@ -136,17 +136,17 @@ TEST_F(Inheritance, OverrideInChain) {
 
 TEST_F(Inheritance, ChildCanAddMethods) {
   std::string source = R"(
-    class Parent {
+    struct Parent {
       parentMethod() {
         print "parent";
       }
     }
-    class Child + Parent {
+    struct Child + Parent {
       childMethod() {
         print "child";
       }
     }
-    var c = Child();
+    let c = Child();
     c.parentMethod();
     c.childMethod();
   )";
@@ -156,18 +156,18 @@ TEST_F(Inheritance, ChildCanAddMethods) {
 
 TEST_F(Inheritance, ChildInitCallsOwnMethods) {
   std::string source = R"(
-    class Parent {
+    struct Parent {
       setup() {
-        this.value = 10;
+        self.value = 10;
       }
     }
-    class Child + Parent {
+    struct Child + Parent {
       init() {
-        this.setup();
-        this.value = this.value * 2;
+        self.setup();
+        self.value = self.value * 2;
       }
     }
-    var c = Child();
+    let c = Child();
     print c.value;
   )";
   EXPECT_NO_THROW(run(source));
@@ -176,18 +176,18 @@ TEST_F(Inheritance, ChildInitCallsOwnMethods) {
 
 TEST_F(Inheritance, ParentAndChildInstances) {
   std::string source = R"(
-    class Animal {
+    struct Animal {
       speak() {
         print "animal sound";
       }
     }
-    class Dog + Animal {
+    struct Dog + Animal {
       speak() {
         print "bark";
       }
     }
-    var a = Animal();
-    var d = Dog();
+    let a = Animal();
+    let d = Dog();
     a.speak();
     d.speak();
   )";
@@ -197,18 +197,18 @@ TEST_F(Inheritance, ParentAndChildInstances) {
 
 TEST_F(Inheritance, ChildMethodCallsInheritedMethod) {
   std::string source = R"(
-    class A {
+    struct A {
       method() {
         print "A";
       }
     }
-    class B + A {
+    struct B + A {
       method() {
         print "B";
-        super.method();
+        parent.method();
       }
     }
-    var b = B();
+    let b = B();
     b.method();
   )";
   EXPECT_NO_THROW(run(source));
@@ -217,27 +217,27 @@ TEST_F(Inheritance, ChildMethodCallsInheritedMethod) {
 
 TEST_F(Inheritance, DeepInheritanceWithSuper) {
   std::string source = R"(
-    class A {
+    struct A {
       method() {
         print "A";
       }
     }
 
-    class B + A {
+    struct B + A {
       method() {
         print "B";
-        super.method();
+        parent.method();
       }
     }
 
-    class C + B {
+    struct C + B {
       method() {
         print "C";
-        super.method();
+        parent.method();
       }
     }
 
-    var c = C();
+    let c = C();
     c.method();
   )";
   EXPECT_NO_THROW(run(source));

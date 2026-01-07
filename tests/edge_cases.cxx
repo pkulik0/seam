@@ -17,7 +17,7 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class EdgeCases : public fixtures::Execution {};
+struct EdgeCases : public fixtures::Execution {};
 
 TEST_F(EdgeCases, EmptyProgram) {
   std::string source = "";
@@ -47,9 +47,9 @@ TEST_F(EdgeCases, OnlyBlockComments) {
 
 TEST_F(EdgeCases, SingleNestedScope) {
   std::string source = R"(
-    var a = 1;
+    let a = 1;
     {
-      var b = 2;
+      let b = 2;
       print a + b;
     }
   )";
@@ -59,16 +59,16 @@ TEST_F(EdgeCases, SingleNestedScope) {
 
 TEST_F(EdgeCases, LongChainedCalls) {
   std::string source = R"(
-    class Builder {
+    struct Builder {
       init() {
-        this.value = 0;
+        self.value = 0;
       }
       add(n) {
-        this.value = this.value + n;
-        return this;
+        self.value = self.value + n;
+        return self;
       }
       get() {
-        return this.value;
+        return self.value;
       }
     }
     print Builder().add(1).add(2).add(3).add(4).get();
@@ -79,13 +79,13 @@ TEST_F(EdgeCases, LongChainedCalls) {
 
 TEST_F(EdgeCases, FunctionAsProperty) {
   std::string source = R"(
-    class Container {}
-    fun greet() {
+    struct Container {}
+    fn greet() {
       return "hello";
     }
-    var c = Container();
-    c.fn = greet;
-    print c.fn();
+    let c = Container();
+    c.func = greet;
+    print c.func();
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "hello\n");
@@ -93,7 +93,7 @@ TEST_F(EdgeCases, FunctionAsProperty) {
 
 TEST_F(EdgeCases, SelfReferenceInUpdate) {
   std::string source = R"(
-    var x = 5;
+    let x = 5;
     x = x + x;
     print x;
   )";
@@ -103,7 +103,7 @@ TEST_F(EdgeCases, SelfReferenceInUpdate) {
 
 TEST_F(EdgeCases, ZeroArityFunction) {
   std::string source = R"(
-    fun noArgs() {
+    fn noArgs() {
       return 42;
     }
     print noArgs();
@@ -114,9 +114,9 @@ TEST_F(EdgeCases, ZeroArityFunction) {
 
 TEST_F(EdgeCases, ComplexTernaryNesting) {
   std::string source = R"(
-    var a = true;
-    var b = false;
-    var c = true;
+    let a = true;
+    let b = false;
+    let c = true;
     print a ? (b ? 1 : (c ? 2 : 3)) : 4;
   )";
   EXPECT_NO_THROW(run(source));
@@ -133,25 +133,25 @@ TEST_F(EdgeCases, MixedArithmeticAndComparison) {
 
 TEST_F(EdgeCases, NestedFunctionCalls) {
   std::string source = R"(
-    fun add(a, b) { return a + b; }
-    fun mul(a, b) { return a * b; }
+    fn add(a, b) { return a + b; }
+    fn mul(a, b) { return a * b; }
     print add(mul(2, 3), mul(4, 5));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "26\n");
 }
 
-TEST_F(EdgeCases, ClassWithManyMethods) {
+TEST_F(EdgeCases, StructWithManyMethods) {
   std::string source = R"(
-    class Calculator {
-      init() { this.result = 0; }
-      add(n) { this.result = this.result + n; return this; }
-      sub(n) { this.result = this.result - n; return this; }
-      mul(n) { this.result = this.result * n; return this; }
-      div(n) { this.result = this.result / n; return this; }
-      get() { return this.result; }
+    struct Calculator {
+      init() { self.result = 0; }
+      add(n) { self.result = self.result + n; return self; }
+      sub(n) { self.result = self.result - n; return self; }
+      mul(n) { self.result = self.result * n; return self; }
+      div(n) { self.result = self.result / n; return self; }
+      get() { return self.result; }
     }
-    var c = Calculator();
+    let c = Calculator();
     print c.add(10).mul(2).sub(5).div(3).get();
   )";
   EXPECT_NO_THROW(run(source));
@@ -160,11 +160,11 @@ TEST_F(EdgeCases, ClassWithManyMethods) {
 
 TEST_F(EdgeCases, InheritedMethodCallsOverriddenMethod) {
   std::string source = R"(
-    class Base {
-      method() { this.printMe(); }
+    struct Base {
+      method() { self.printMe(); }
       printMe() { print "base"; }
     }
-    class Derived + Base {
+    struct Derived + Base {
       printMe() { print "derived"; }
     }
     Derived().method();
@@ -184,9 +184,9 @@ TEST_F(EdgeCases, DeeplyNestedExpressions) {
 
 TEST_F(EdgeCases, ReassignFunctionVariable) {
   std::string source = R"(
-    fun first() { return 1; }
-    fun second() { return 2; }
-    var f = first;
+    fn first() { return 1; }
+    fn second() { return 2; }
+    let f = first;
     print f();
     f = second;
     print f();

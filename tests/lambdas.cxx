@@ -17,11 +17,11 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class Lambdas : public fixtures::Execution {};
+struct Lambdas : public fixtures::Execution {};
 
 TEST_F(Lambdas, LambdaWithReturn) {
   std::string source = R"(
-    var multiply = fun(a, b) {
+    let multiply = fn(a, b) {
       return a * b;
     };
     print multiply(6, 7);
@@ -32,10 +32,10 @@ TEST_F(Lambdas, LambdaWithReturn) {
 
 TEST_F(Lambdas, LambdaAsReturn) {
   std::string source = R"(
-    fun makeMultiplier(factor) {
-      return fun(n) { return n * factor; };
+    fn makeMultiplier(factor) {
+      return fn(n) { return n * factor; };
     }
-    var twice = makeMultiplier(2);
+    let twice = makeMultiplier(2);
     print twice(5);
   )";
   EXPECT_NO_THROW(run(source));
@@ -44,9 +44,9 @@ TEST_F(Lambdas, LambdaAsReturn) {
 
 TEST_F(Lambdas, NestedLambdas) {
   std::string source = R"(
-    var f = fun(a) {
-      return fun(b) {
-        return fun(c) {
+    let f = fn(a) {
+      return fn(b) {
+        return fn(c) {
           return a + b + c;
         };
       };
@@ -59,16 +59,16 @@ TEST_F(Lambdas, NestedLambdas) {
 
 TEST_F(Lambdas, LambdaCapturesThis) {
   std::string source = R"(
-    class Greeter {
+    struct Greeter {
       init(name) {
-        this.name = name;
+        self.name = name;
       }
       getGreeter() {
-        return fun() { print "Hi, " + this.name; };
+        return fn() { print "Hi, " + self.name; };
       }
     }
-    var g = Greeter("Seam");
-    var f = g.getGreeter();
+    let g = Greeter("Seam");
+    let f = g.getGreeter();
     f();
   )";
   EXPECT_NO_THROW(run(source));
@@ -77,11 +77,11 @@ TEST_F(Lambdas, LambdaCapturesThis) {
 
 TEST_F(Lambdas, LambdaCaptureAndShadow) {
   std::string source = R"(
-    var x = "outer";
-    var f = nil;
+    let x = "outer";
+    let f = nil;
     {
-      var x = "inner";
-      f = fun() { print x; };
+      let x = "inner";
+      f = fn() { print x; };
     }
     f();
   )";
@@ -91,8 +91,8 @@ TEST_F(Lambdas, LambdaCaptureAndShadow) {
 
 TEST_F(Lambdas, LambdaWithSideEffects) {
   std::string source = R"(
-    var result = 0;
-    var f = fun() { result = 42; };
+    let result = 0;
+    let f = fn() { result = 42; };
     f();
     print result;
   )";
@@ -102,8 +102,8 @@ TEST_F(Lambdas, LambdaWithSideEffects) {
 
 TEST_F(Lambdas, LambdaModifiesCapture) {
   std::string source = R"(
-    var x = 10;
-    var f = fun() { x = x + 5; };
+    let x = 10;
+    let f = fn() { x = x + 5; };
     f();
     f();
     print x;
@@ -114,7 +114,7 @@ TEST_F(Lambdas, LambdaModifiesCapture) {
 
 TEST_F(Lambdas, LambdaPrints) {
   std::string source = R"(
-    var f = fun() { print "hello from lambda"; };
+    let f = fn() { print "hello from lambda"; };
     f();
   )";
   EXPECT_NO_THROW(run(source));
@@ -123,7 +123,7 @@ TEST_F(Lambdas, LambdaPrints) {
 
 TEST_F(Lambdas, LambdaInVariable) {
   std::string source = R"(
-    var greet = fun() { print "hi"; };
+    let greet = fn() { print "hi"; };
     greet();
     greet();
   )";
@@ -133,11 +133,11 @@ TEST_F(Lambdas, LambdaInVariable) {
 
 TEST_F(Lambdas, LambdaPassedToFunction) {
   std::string source = R"(
-    var output = "";
-    fun execute(f) {
+    let output = "";
+    fn execute(f) {
       f();
     }
-    execute(fun() { output = "executed"; });
+    execute(fn() { output = "executed"; });
     print output;
   )";
   EXPECT_NO_THROW(run(source));

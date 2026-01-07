@@ -17,13 +17,13 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class Closures : public fixtures::Execution {};
+struct Closures : public fixtures::Execution {};
 
 TEST_F(Closures, BasicClosure) {
   std::string source = R"(
-    fun outer() {
-      var x = "captured";
-      fun inner() {
+    fn outer() {
+      let x = "captured";
+      fn inner() {
         print x;
       }
       inner();
@@ -36,9 +36,9 @@ TEST_F(Closures, BasicClosure) {
 
 TEST_F(Closures, CloseOverMutable) {
   std::string source = R"(
-    fun outer() {
-      var x = 1;
-      fun inner() {
+    fn outer() {
+      let x = 1;
+      fn inner() {
         print x;
       }
       inner();
@@ -53,15 +53,15 @@ TEST_F(Closures, CloseOverMutable) {
 
 TEST_F(Closures, MultipleClosuresShareState) {
   std::string source = R"(
-    fun makeCounter() {
-      var count = 0;
-      fun increment() {
+    fn makeCounter() {
+      let count = 0;
+      fn increment() {
         count = count + 1;
         return count;
       }
       return increment;
     }
-    var counter = makeCounter();
+    let counter = makeCounter();
     print counter();
     print counter();
     print counter();
@@ -72,11 +72,11 @@ TEST_F(Closures, MultipleClosuresShareState) {
 
 TEST_F(Closures, NestedClosures) {
   std::string source = R"(
-    fun outer() {
-      var a = "a";
-      fun middle() {
-        var b = "b";
-        fun inner() {
+    fn outer() {
+      let a = "a";
+      fn middle() {
+        let b = "b";
+        fn inner() {
           print a;
           print b;
         }
@@ -92,13 +92,13 @@ TEST_F(Closures, NestedClosures) {
 
 TEST_F(Closures, ClosureReturnedFromFunction) {
   std::string source = R"(
-    fun makeAdder(x) {
-      fun adder(y) {
+    fn makeAdder(x) {
+      fn adder(y) {
         return x + y;
       }
       return adder;
     }
-    var add5 = makeAdder(5);
+    let add5 = makeAdder(5);
     print add5(3);
     print add5(10);
   )";
@@ -108,16 +108,16 @@ TEST_F(Closures, ClosureReturnedFromFunction) {
 
 TEST_F(Closures, CounterExample) {
   std::string source = R"(
-    fun createCounter() {
-      var count = 0;
-      fun counter() {
+    fn createCounter() {
+      let count = 0;
+      fn counter() {
         count = count + 1;
         return count;
       }
       return counter;
     }
-    var c1 = createCounter();
-    var c2 = createCounter();
+    let c1 = createCounter();
+    let c2 = createCounter();
     print c1();
     print c1();
     print c2();
@@ -129,12 +129,12 @@ TEST_F(Closures, CounterExample) {
 
 TEST_F(Closures, ClosureModifiesEnclosing) {
   std::string source = R"(
-    fun outer() {
-      var x = 0;
-      fun setX(val) {
+    fn outer() {
+      let x = 0;
+      fn setX(val) {
         x = val;
       }
-      fun getX() {
+      fn getX() {
         return x;
       }
       setX(42);
@@ -148,10 +148,10 @@ TEST_F(Closures, ClosureModifiesEnclosing) {
 
 TEST_F(Closures, ClosureWithParameters) {
   std::string source = R"(
-    fun makeAdder(x) {
-      return fun(y) { return x + y; };
+    fn makeAdder(x) {
+      return fn(y) { return x + y; };
     }
-    var add5 = makeAdder(5);
+    let add5 = makeAdder(5);
     print add5(10);
   )";
   EXPECT_NO_THROW(run(source));
@@ -160,12 +160,12 @@ TEST_F(Closures, ClosureWithParameters) {
 
 TEST_F(Closures, CaptureLoopVariable) {
   std::string source = R"(
-    var f1 = nil;
-    var f2 = nil;
-    for (var i = 0; i < 2; i = i + 1) {
-      var j = i;
-      if (i == 0) f1 = fun() { print j; };
-      else f2 = fun() { print j; };
+    let f1 = nil;
+    let f2 = nil;
+    for (let i = 0; i < 2; i = i + 1) {
+      let j = i;
+      if (i == 0) f1 = fn() { print j; };
+      else f2 = fn() { print j; };
     }
     f1();
     f2();
@@ -176,11 +176,11 @@ TEST_F(Closures, CaptureLoopVariable) {
 
 TEST_F(Closures, CaptureForInitializer) {
   std::string source = R"(
-    var f1 = nil;
-    var f2 = nil;
-    for (var i = 0; i < 2; i = i + 1) {
-      if (i == 0) f1 = fun() { print i; };
-      else f2 = fun() { print i; };
+    let f1 = nil;
+    let f2 = nil;
+    for (let i = 0; i < 2; i = i + 1) {
+      if (i == 0) f1 = fn() { print i; };
+      else f2 = fn() { print i; };
     }
     f1();
     f2();

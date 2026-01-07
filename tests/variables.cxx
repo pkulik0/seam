@@ -17,11 +17,11 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class Variables : public fixtures::Execution {};
+struct Variables : public fixtures::Execution {};
 
 TEST_F(Variables, DeclarationAndAccess) {
   std::string source = R"(
-    var x = 10;
+    let x = 10;
     print x;
   )";
   EXPECT_NO_THROW(run(source));
@@ -30,7 +30,7 @@ TEST_F(Variables, DeclarationAndAccess) {
 
 TEST_F(Variables, InitializerExpression) {
   std::string source = R"(
-    var x = 5 + 5;
+    let x = 5 + 5;
     print x;
   )";
   EXPECT_NO_THROW(run(source));
@@ -39,7 +39,7 @@ TEST_F(Variables, InitializerExpression) {
 
 TEST_F(Variables, Reassignment) {
   std::string source = R"(
-    var x = 1;
+    let x = 1;
     x = 2;
     print x;
   )";
@@ -49,7 +49,7 @@ TEST_F(Variables, Reassignment) {
 
 TEST_F(Variables, StringVariable) {
   std::string source = R"(
-    var s = "hello";
+    let s = "hello";
     print s;
   )";
   EXPECT_NO_THROW(run(source));
@@ -58,7 +58,7 @@ TEST_F(Variables, StringVariable) {
 
 TEST_F(Variables, BooleanVariable) {
   std::string source = R"(
-    var b = true;
+    let b = true;
     print b;
   )";
   EXPECT_NO_THROW(run(source));
@@ -67,7 +67,7 @@ TEST_F(Variables, BooleanVariable) {
 
 TEST_F(Variables, NilVariable) {
   std::string source = R"(
-    var n = nil;
+    let n = nil;
     print n;
   )";
   EXPECT_NO_THROW(run(source));
@@ -76,9 +76,9 @@ TEST_F(Variables, NilVariable) {
 
 TEST_F(Variables, LocalScopeShadowing) {
   std::string source = R"(
-    var a = "outer";
+    let a = "outer";
     {
-      var a = "inner";
+      let a = "inner";
       print a;
     }
     print a;
@@ -89,11 +89,11 @@ TEST_F(Variables, LocalScopeShadowing) {
 
 TEST_F(Variables, NestedScopes) {
   std::string source = R"(
-    var a = "global";
+    let a = "global";
     {
-      var a = "outer";
+      let a = "outer";
       {
-        var a = "inner";
+        let a = "inner";
         print a;
       }
       print a;
@@ -106,13 +106,13 @@ TEST_F(Variables, NestedScopes) {
 
 TEST_F(Variables, DeeplyNestedShadowing) {
   std::string source = R"(
-    var x = 1;
+    let x = 1;
     {
-      var x = 2;
+      let x = 2;
       {
-        var x = 3;
+        let x = 3;
         {
-          var x = 4;
+          let x = 4;
           print x;
         }
         print x;
@@ -127,13 +127,13 @@ TEST_F(Variables, DeeplyNestedShadowing) {
 
 TEST_F(Variables, ShadowingInDifferentBranches) {
   std::string source = R"(
-    var x = "global";
+    let x = "global";
     if (true) {
-      var x = "then";
+      let x = "then";
       print x;
     }
     if (true) {
-      var x = "else";
+      let x = "else";
       print x;
     }
     print x;
@@ -144,7 +144,7 @@ TEST_F(Variables, ShadowingInDifferentBranches) {
 
 TEST_F(Variables, BlockAccessesOuter) {
   std::string source = R"(
-    var x = 10;
+    let x = 10;
     {
       print x;
     }
@@ -155,7 +155,7 @@ TEST_F(Variables, BlockAccessesOuter) {
 
 TEST_F(Variables, BlockModifiesOuter) {
   std::string source = R"(
-    var x = 10;
+    let x = 10;
     {
       x = 20;
     }
@@ -181,7 +181,7 @@ TEST_F(Variables, AssignUndefinedError) {
 
 TEST_F(Variables, NilInitializedVariable) {
   std::string source = R"(
-    var x = nil;
+    let x = nil;
     print x;
   )";
   EXPECT_NO_THROW(run(source));

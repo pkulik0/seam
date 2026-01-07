@@ -47,10 +47,10 @@ enum class Type {
 
   // Keywords
   AND,
-  CLASS,
+  STRUCT,
   ELSE,
   FALSE,
-  FUN,
+  FN,
   FOR,
   IF,
   NIL,
@@ -58,10 +58,10 @@ enum class Type {
   PRINT,
   RETURN,
   STATIC,
-  SUPER,
-  THIS,
+  PARENT,
+  SELF,
   TRUE,
-  VAR,
+  LET,
   WHILE,
 
   END_OF_FILE,

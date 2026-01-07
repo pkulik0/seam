@@ -17,17 +17,17 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class Constructors : public fixtures::Execution {};
+struct Constructors : public fixtures::Execution {};
 
 TEST_F(Constructors, BasicInit) {
   std::string source = R"(
-    class Point {
+    struct Point {
       init(x, y) {
-        this.x = x;
-        this.y = y;
+        self.x = x;
+        self.y = y;
       }
     }
-    var p = Point(3, 4);
+    let p = Point(3, 4);
     print p.x;
     print p.y;
   )";
@@ -37,12 +37,12 @@ TEST_F(Constructors, BasicInit) {
 
 TEST_F(Constructors, InitNoParams) {
   std::string source = R"(
-    class Counter {
+    struct Counter {
       init() {
-        this.count = 0;
+        self.count = 0;
       }
     }
-    var c = Counter();
+    let c = Counter();
     print c.count;
   )";
   EXPECT_NO_THROW(run(source));
@@ -51,18 +51,18 @@ TEST_F(Constructors, InitNoParams) {
 
 TEST_F(Constructors, InitMultipleParams) {
   std::string source = R"(
-    class Rectangle {
+    struct Rectangle {
       init(x, y, width, height) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+        self.x = x;
+        self.y = y;
+        self.width = width;
+        self.height = height;
       }
       area() {
-        return this.width * this.height;
+        return self.width * self.height;
       }
     }
-    var r = Rectangle(0, 0, 10, 5);
+    let r = Rectangle(0, 0, 10, 5);
     print r.area();
   )";
   EXPECT_NO_THROW(run(source));
@@ -71,12 +71,12 @@ TEST_F(Constructors, InitMultipleParams) {
 
 TEST_F(Constructors, InitReturnsInstance) {
   std::string source = R"(
-    class Box {
+    struct Box {
       init(value) {
-        this.value = value;
+        self.value = value;
       }
     }
-    var b = Box(42);
+    let b = Box(42);
     print b;
   )";
   EXPECT_NO_THROW(run(source));
@@ -85,14 +85,14 @@ TEST_F(Constructors, InitReturnsInstance) {
 
 TEST_F(Constructors, InitWithMultipleStatements) {
   std::string source = R"(
-    class Point {
+    struct Point {
       init(x, y) {
-        this.x = x;
-        this.y = y;
-        this.sum = x + y;
+        self.x = x;
+        self.y = y;
+        self.sum = x + y;
       }
     }
-    var p = Point(3, 4);
+    let p = Point(3, 4);
     print p.sum;
   )";
   EXPECT_NO_THROW(run(source));
@@ -101,16 +101,16 @@ TEST_F(Constructors, InitWithMultipleStatements) {
 
 TEST_F(Constructors, InitCallsMethod) {
   std::string source = R"(
-    class Circle {
+    struct Circle {
       init(radius) {
-        this.radius = radius;
-        this.calculateArea();
+        self.radius = radius;
+        self.calculateArea();
       }
       calculateArea() {
-        this.area = 3.14 * this.radius * this.radius;
+        self.area = 3.14 * self.radius * self.radius;
       }
     }
-    var c = Circle(2);
+    let c = Circle(2);
     print c.area;
   )";
   EXPECT_NO_THROW(run(source));
@@ -119,12 +119,12 @@ TEST_F(Constructors, InitCallsMethod) {
 
 TEST_F(Constructors, InitWithStringParam) {
   std::string source = R"(
-    class Greeter {
+    struct Greeter {
       init(name) {
-        this.greeting = "Hello, " + name;
+        self.greeting = "Hello, " + name;
       }
     }
-    var g = Greeter("World");
+    let g = Greeter("World");
     print g.greeting;
   )";
   EXPECT_NO_THROW(run(source));
@@ -133,14 +133,14 @@ TEST_F(Constructors, InitWithStringParam) {
 
 TEST_F(Constructors, InitSetsMultipleProperties) {
   std::string source = R"(
-    class Person {
+    struct Person {
       init(first, last) {
-        this.firstName = first;
-        this.lastName = last;
-        this.fullName = first + " " + last;
+        self.firstName = first;
+        self.lastName = last;
+        self.fullName = first + " " + last;
       }
     }
-    var p = Person("John", "Doe");
+    let p = Person("John", "Doe");
     print p.firstName;
     print p.lastName;
     print p.fullName;
@@ -153,41 +153,41 @@ TEST_F(Constructors, InitSetsMultipleProperties) {
 
 TEST_F(Constructors, InitWrongArity) {
   std::string source = R"(
-    class Point {
+    struct Point {
       init(x, y) {
-        this.x = x;
-        this.y = y;
+        self.x = x;
+        self.y = y;
       }
     }
-    var p = Point(1);
+    let p = Point(1);
   )";
   EXPECT_THROW(run(source), Error);
 }
 
 TEST_F(Constructors, InitTooManyArgs) {
   std::string source = R"(
-    class Point {
+    struct Point {
       init(x, y) {
-        this.x = x;
-        this.y = y;
+        self.x = x;
+        self.y = y;
       }
     }
-    var p = Point(1, 2, 3);
+    let p = Point(1, 2, 3);
   )";
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(Constructors, ThisOutsideClass) {
+TEST_F(Constructors, ThisOutsideStruct) {
   std::string source = R"(
-    print this;
+    print self;
   )";
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(Constructors, ThisInFunction) {
+TEST_F(Constructors, ThisInFn) {
   std::string source = R"(
-    fun test() {
-      print this;
+    fn test() {
+      print self;
     }
     test();
   )";
@@ -196,13 +196,13 @@ TEST_F(Constructors, ThisInFunction) {
 
 TEST_F(Constructors, InitExplicitReturnThis) {
   std::string source = R"(
-    class Box {
+    struct Box {
       init(value) {
-        this.value = value;
+        self.value = value;
         return;
       }
     }
-    var b = Box(42);
+    let b = Box(42);
     print b.value;
   )";
   EXPECT_NO_THROW(run(source));
@@ -211,11 +211,11 @@ TEST_F(Constructors, InitExplicitReturnThis) {
 
 TEST_F(Constructors, InitEarlyReturnReturnsThis) {
   std::string source = R"(
-    class Box {
+    struct Box {
       init(value) {
-        this.value = value;
+        self.value = value;
         if (value == "early") return;
-        this.value = "late";
+        self.value = "late";
       }
     }
 

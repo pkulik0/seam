@@ -86,9 +86,9 @@ private:
         return;
 
       switch (peek().type()) {
-      case Type::CLASS:
-      case Type::FUN:
-      case Type::VAR:
+      case Type::STRUCT:
+      case Type::FN:
+      case Type::LET:
       case Type::FOR:
       case Type::IF:
       case Type::PRINT:
@@ -138,14 +138,14 @@ private:
 
   std::optional<Declaration> parse_declaration() {
     try {
-      if (match(Type::CLASS)) {
-        return parse_class_declaration();
+      if (match(Type::STRUCT)) {
+        return parse_struct_declaration();
       }
-      if (match(Type::FUN)) {
-        return parse_function_declaration();
+      if (match(Type::FN)) {
+        return parse_fn_declaration();
       }
-      if (match(Type::VAR)) {
-        return parse_variable_declaration();
+      if (match(Type::LET)) {
+        return parse_let_declaration();
       }
       return parse_statement();
     } catch (const Error &e) {
@@ -158,32 +158,32 @@ private:
     }
   }
 
-  ClassDeclaration parse_class_declaration() {
-    auto name = consume(Type::IDENTIFIER, "Expected class name.");
+  StructDeclaration parse_struct_declaration() {
+    auto name = consume(Type::IDENTIFIER, "Expected struct name.");
 
-    std::unique_ptr<Variable> superclass = nullptr;
+    std::unique_ptr<LetExpr> parent = nullptr;
     if (match(Type::PLUS)) {
-      consume(Type::IDENTIFIER, "Expected superclass name.");
-      superclass = std::make_unique<Variable>(previous());
+      consume(Type::IDENTIFIER, "Expected parent name.");
+      parent = std::make_unique<LetExpr>(previous());
     }
-    consume(Type::LEFT_BRACE, "Expected '{' before class body.");
+    consume(Type::LEFT_BRACE, "Expected '{' before struct body.");
 
-    std::vector<std::unique_ptr<FunctionDeclaration>> methods;
+    std::vector<std::unique_ptr<FnDeclaration>> methods;
     while (!check(Type::RIGHT_BRACE) && !is_at_end()) {
       bool is_static = match(Type::STATIC);
-      auto method = parse_function_declaration();
+      auto method = parse_fn_declaration();
       method.is_static = is_static;
       methods.emplace_back(
-          std::make_unique<FunctionDeclaration>(std::move(method)));
+          std::make_unique<FnDeclaration>(std::move(method)));
     }
 
-    consume(Type::RIGHT_BRACE, "Expected '}' after class body.");
-    return ClassDeclaration{name, std::move(superclass), std::move(methods)};
+    consume(Type::RIGHT_BRACE, "Expected '}' after struct body.");
+    return StructDeclaration{name, std::move(parent), std::move(methods)};
   }
 
-  FunctionDeclaration parse_function_declaration() {
-    auto name = consume(Type::IDENTIFIER, "Expected function name.");
-    consume(Type::LEFT_PAREN, "Expected '(' after function name.");
+  FnDeclaration parse_fn_declaration() {
+    auto name = consume(Type::IDENTIFIER, "Expected fn name.");
+    consume(Type::LEFT_PAREN, "Expected '(' after fn name.");
     std::vector<Token> parameters;
     if (!check(Type::RIGHT_PAREN)) {
       do {
@@ -192,19 +192,19 @@ private:
       } while (match(Type::COMMA));
     }
     consume(Type::RIGHT_PAREN, "Expected ')' after parameters.");
-    consume(Type::LEFT_BRACE, "Expected '{' before function body.");
-    return FunctionDeclaration{name, std::move(parameters),
+    consume(Type::LEFT_BRACE, "Expected '{' before fn body.");
+    return FnDeclaration{name, std::move(parameters),
                                std::make_unique<BlockStatement>(parse_block())};
   }
 
-  VariableDeclaration parse_variable_declaration() {
-    const auto name = consume(Type::IDENTIFIER, "Expected variable name.");
+  LetDeclaration parse_let_declaration() {
+    const auto name = consume(Type::IDENTIFIER, "Expected let name.");
 
-    consume(Type::EQUAL, "Expected '=' after variable name.");
+    consume(Type::EQUAL, "Expected '=' after let name.");
     auto initializer = make_expression(parse_expression());
 
-    consume(Type::SEMICOLON, "Expected ';' after variable declaration.");
-    return VariableDeclaration{name, std::move(initializer)};
+    consume(Type::SEMICOLON, "Expected ';' after let declaration.");
+    return LetDeclaration{name, std::move(initializer)};
   }
 
   Statement parse_statement() {
@@ -246,8 +246,8 @@ private:
     std::unique_ptr<Declaration> initializer;
     if (match(Type::SEMICOLON)) {
       // No initializer
-    } else if (match(Type::VAR)) {
-      initializer = std::make_unique<Declaration>(parse_variable_declaration());
+    } else if (match(Type::LET)) {
+      initializer = std::make_unique<Declaration>(parse_let_declaration());
     } else {
       initializer = std::make_unique<Declaration>(parse_expression());
       consume(Type::SEMICOLON, "Expected ';' after initializer.");
@@ -331,8 +331,8 @@ private:
       Token equals = previous();
       auto value = parse_assignment();
 
-      if (std::holds_alternative<Variable>(expr)) {
-        Token name = std::get<Variable>(expr).name;
+      if (std::holds_alternative<LetExpr>(expr)) {
+        Token name = std::get<LetExpr>(expr).name;
         return Assignment{name, make_expression(std::move(value))};
       } else if (std::holds_alternative<Get>(expr)) {
         Get &get = std::get<Get>(expr);
@@ -478,8 +478,8 @@ private:
     return Call{make_expression(std::move(expr)), paren, std::move(arguments)};
   }
 
-  FunctionExpression parse_function_expression() {
-    consume(Type::LEFT_PAREN, "Expected '(' after 'fun'.");
+  FnExpression parse_fn_expression() {
+    consume(Type::LEFT_PAREN, "Expected '(' after 'fn'.");
     std::vector<Token> parameters;
     if (!check(Type::RIGHT_PAREN)) {
       do {
@@ -489,10 +489,10 @@ private:
     }
     consume(Type::RIGHT_PAREN, "Expected ')' after parameters.");
 
-    consume(Type::LEFT_BRACE, "Expected '{' before function body.");
+    consume(Type::LEFT_BRACE, "Expected '{' before fn body.");
     auto body = std::make_unique<BlockStatement>(parse_block());
 
-    return FunctionExpression{std::move(parameters), std::move(body)};
+    return FnExpression{std::move(parameters), std::move(body)};
   }
 
   Expression parse_primary() {
@@ -503,15 +503,15 @@ private:
     if (match(Type::NIL))
       return Literal{std::any{}};
     
-    if (match(Type::SUPER)) {
+    if (match(Type::PARENT)) {
       auto keyword = previous();
-      consume(Type::DOT, "Expected '.' after 'super'.");
+      consume(Type::DOT, "Expected '.' after 'parent'.");
       auto method = consume(Type::IDENTIFIER, "Expected method name.");
       return Super{keyword, method};
     }
 
-    if (match(Type::FUN)) {
-      return parse_function_expression();
+    if (match(Type::FN)) {
+      return parse_fn_expression();
     }
 
     if (match(Type::NUMBER, Type::STRING)) {
@@ -519,11 +519,11 @@ private:
     }
 
     if (match(Type::IDENTIFIER)) {
-      return Variable{previous()};
+      return LetExpr{previous()};
     }
 
-    if (match(Type::THIS)) {
-      return ThisExpr{previous()};
+    if (match(Type::SELF)) {
+      return SelfExpr{previous()};
     }
 
     if (match(Type::LEFT_PAREN)) {
