@@ -19,7 +19,7 @@ using namespace seam::token;
 
 export namespace seam::resolver {
 
-class ResolutionError : public error::SeamError {
+class ResolutionError : public Error {
 public:
   ResolutionError(Token token, std::string message)
       : m_token(std::move(token)), m_message(std::move(message)) {}
@@ -30,7 +30,7 @@ public:
   [[nodiscard]] auto reason() const noexcept -> const char * override {
     return m_message.c_str();
   }
-  [[nodiscard]] auto location() const noexcept -> error::Location override {
+  [[nodiscard]] auto location() const noexcept -> ResolutionError::Location override {
     return {static_cast<int>(m_token.line()),
             static_cast<int>(m_token.column())};
   }

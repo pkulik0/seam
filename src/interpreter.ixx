@@ -22,15 +22,7 @@ using namespace seam::token;
 
 export namespace seam::interpreter {
 
-class ReturnValue : public std::exception {
-public:
-  ReturnValue(const std::any &value) : m_value(value) {}
-  const std::any &value() const { return m_value; }
-private:
-  std::any m_value;
-};
-
-class RuntimeError : public error::SeamError {
+class RuntimeError : public Error {
 public:
   RuntimeError(Token token, std::string message)
       : m_token(std::move(token)), m_message(std::move(message)) {}
@@ -41,7 +33,7 @@ public:
   [[nodiscard]] auto reason() const noexcept -> const char * override {
     return m_message.c_str();
   }
-  [[nodiscard]] auto location() const noexcept -> error::Location override {
+  [[nodiscard]] auto location() const noexcept -> Error::Location override {
     return {static_cast<int>(m_token.line()),
             static_cast<int>(m_token.column())};
   }
@@ -114,11 +106,21 @@ class Interpreter {
 private:
   std::shared_ptr<Environment> m_globals;
   std::shared_ptr<Environment> m_env;
-  std::unordered_map<const Expression*, int> m_locals;
+  std::unordered_map<const Expression *, int> m_locals;
+
+  class ReturnValue : public std::exception {
+  public:
+    ReturnValue(const std::any &value) : m_value(value) {}
+    const std::any &value() const { return m_value; }
+
+  private:
+    std::any m_value;
+  };
 
   class ScopeGuard {
   public:
-    ScopeGuard(Interpreter &interp, std::shared_ptr<Environment> parent = nullptr)
+    ScopeGuard(Interpreter &interp,
+               std::shared_ptr<Environment> parent = nullptr)
         : m_interp(interp), m_previous(interp.m_env) {
       m_env = std::make_shared<Environment>(parent ? parent : interp.m_env);
       m_interp.m_env = m_env;
@@ -155,9 +157,10 @@ private:
     const FunctionDeclaration &declaration;
     std::shared_ptr<Environment> closure;
 
-    SeamFunction(const FunctionDeclaration &declaration, std::shared_ptr<Environment> closure)
-        : SeamCallable(declaration.parameters.size()),
-          declaration(declaration), closure(closure) {}
+    SeamFunction(const FunctionDeclaration &declaration,
+                 std::shared_ptr<Environment> closure)
+        : SeamCallable(declaration.parameters.size()), declaration(declaration),
+          closure(closure) {}
     std::any call(Interpreter &interpreter,
                   std::vector<std::any> &&arguments) override {
       ScopeGuard scope(interpreter, closure);
@@ -178,9 +181,10 @@ private:
     const FunctionExpression &expression;
     std::shared_ptr<Environment> closure;
 
-    SeamLambda(const FunctionExpression &expression, std::shared_ptr<Environment> closure)
-        : SeamCallable(expression.parameters.size()),
-          expression(expression), closure(closure) {}
+    SeamLambda(const FunctionExpression &expression,
+               std::shared_ptr<Environment> closure)
+        : SeamCallable(expression.parameters.size()), expression(expression),
+          closure(closure) {}
     std::any call(Interpreter &interpreter,
                   std::vector<std::any> &&arguments) override {
       ScopeGuard scope(interpreter, closure);
@@ -437,46 +441,46 @@ private:
   }
 
   void execute_statement(const Statement &statement) {
-    std::visit(overload{
-                   [this](const PrintStatement &s) -> void {
-                     std::println("{}", stringify(evaluate(*s.expression)));
-                   },
-                   [this](const Expression &e) -> void { evaluate(e); },
-                   [this](const BlockStatement &b) -> void {
-                     execute_block(b);
-                   },
-                   [this](const IfStatement &i) -> void {
-                     ScopeGuard scope(*this);
-                     if (is_truthy(evaluate(*i.condition))) {
-                       execute_statement(*i.then_branch);
-                     } else if (i.else_branch) {
-                       execute_statement(*i.else_branch);
-                     }
-                   },
-                   [this](const WhileStatement &w) -> void {
-                     ScopeGuard scope(*this);
-                     while (is_truthy(evaluate(*w.condition))) {
-                       execute_statement(*w.body);
-                     }
-                   },
-                   [this](const ForStatement &f) -> void {
-                     ScopeGuard scope(*this);
-                     if (f.initializer) {
-                       execute_declaration(*f.initializer);
-                     }
-                     while (is_truthy(evaluate(*f.condition))) {
-                       execute_statement(*f.body);
-                       if (f.increment) {
-                         evaluate(*f.increment);
-                       }
-                     }
-                   },
-                   [this](const ReturnStatement &r) -> void {
-                     std::any value = r.value ? evaluate(*r.value) : std::any(std::nullopt);
-                     throw ReturnValue(value);
-                   },
-               },
-               statement);
+    std::visit(
+        overload{
+            [this](const PrintStatement &s) -> void {
+              std::println("{}", stringify(evaluate(*s.expression)));
+            },
+            [this](const Expression &e) -> void { evaluate(e); },
+            [this](const BlockStatement &b) -> void { execute_block(b); },
+            [this](const IfStatement &i) -> void {
+              ScopeGuard scope(*this);
+              if (is_truthy(evaluate(*i.condition))) {
+                execute_statement(*i.then_branch);
+              } else if (i.else_branch) {
+                execute_statement(*i.else_branch);
+              }
+            },
+            [this](const WhileStatement &w) -> void {
+              ScopeGuard scope(*this);
+              while (is_truthy(evaluate(*w.condition))) {
+                execute_statement(*w.body);
+              }
+            },
+            [this](const ForStatement &f) -> void {
+              ScopeGuard scope(*this);
+              if (f.initializer) {
+                execute_declaration(*f.initializer);
+              }
+              while (is_truthy(evaluate(*f.condition))) {
+                execute_statement(*f.body);
+                if (f.increment) {
+                  evaluate(*f.increment);
+                }
+              }
+            },
+            [this](const ReturnStatement &r) -> void {
+              std::any value =
+                  r.value ? evaluate(*r.value) : std::any(std::nullopt);
+              throw ReturnValue(value);
+            },
+        },
+        statement);
   }
 
   void execute_declaration(const Declaration &declaration) {
@@ -506,14 +510,13 @@ private:
       if (value) {
         return *value;
       }
-      throw RuntimeError(name, std::format("Undefined variable '{}'.", name.lexeme()));
+      throw RuntimeError(
+          name, std::format("Undefined variable '{}'.", name.lexeme()));
     }
   }
 
 public:
-  void resolve(const Expression *expr, int depth) {
-    m_locals[expr] = depth;
-  }
+  void resolve(const Expression *expr, int depth) { m_locals[expr] = depth; }
 
   Interpreter() : m_globals(std::make_shared<Environment>()), m_env(m_globals) {
     std::shared_ptr<SeamCallable> clock = std::make_shared<SeamNativeFunction>(

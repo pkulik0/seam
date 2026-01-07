@@ -26,9 +26,9 @@ using namespace seam::token;
 
 export namespace seam::parser {
 
-class Error : public error::SeamError {
+class ParserError : public Error {
 public:
-  Error(Token token, std::string message)
+  ParserError(Token token, std::string message)
       : m_token(std::move(token)), m_message(std::move(message)) {}
 
   [[nodiscard]] auto name() const noexcept -> const char * override {
@@ -37,7 +37,7 @@ public:
   [[nodiscard]] auto reason() const noexcept -> const char * override {
     return m_message.c_str();
   }
-  [[nodiscard]] auto location() const noexcept -> error::Location override {
+  [[nodiscard]] auto location() const noexcept -> ParserError::Location override {
     return {static_cast<int>(m_token.line()),
             static_cast<int>(m_token.column())};
   }
@@ -74,7 +74,7 @@ private:
   Token consume(Type type, const std::string_view message) {
     if (check(type))
       return advance();
-    throw Error(peek(), std::string{message});
+    throw ParserError(peek(), std::string{message});
   }
 
   void synchronize() {
@@ -420,7 +420,7 @@ private:
     if (!check(Type::RIGHT_PAREN)) {
       do {
         if (arguments.size() >= 255) {
-          throw Error(peek(), "Cannot have more than 255 arguments.");
+          throw ParserError(peek(), "Cannot have more than 255 arguments.");
         }
         arguments.emplace_back(make_expression(parse_expression()));
       } while (match(Type::COMMA));
@@ -471,7 +471,7 @@ private:
       return Grouping{make_expression(std::move(expr))};
     }
 
-    throw Error(peek(), "Expected expression.");
+    throw ParserError(peek(), "Expected expression.");
   }
 };
 

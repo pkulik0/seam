@@ -20,9 +20,9 @@ bool is_alphanumeric(char c) { return is_digit(c) || is_alpha(c); }
 
 export namespace seam::scanner {
 
-class Error : public error::SeamError {
+class ScannerError : public Error {
 public:
-  Error(usize line, usize column, std::string message)
+  ScannerError(usize line, usize column, std::string message)
       : m_message(std::move(message)), m_location({static_cast<int>(line), static_cast<int>(column)}) {}
 
   [[nodiscard]] auto name() const noexcept -> const char* override {
@@ -31,13 +31,13 @@ public:
   [[nodiscard]] auto reason() const noexcept -> const char* override {
     return m_message.c_str();
   }
-  [[nodiscard]] auto location() const noexcept -> error::Location override {
+  [[nodiscard]] auto location() const noexcept -> Error::Location override {
 	return m_location;
   }
 
 private:
   std::string m_message;
-  error::Location m_location;
+  Error::Location m_location;
 };
 
 class Scanner {
@@ -172,7 +172,7 @@ private:
       } else if (is_alpha(c)) {
         scan_identifier();
       } else {
-        throw Error(m_line, m_column,
+        throw ScannerError(m_line, m_column,
                     std::format("Unexpected character: '{}'", c));
       }
       break;
@@ -229,7 +229,7 @@ private:
 
     while (depth > 0) {
       if (is_at_end())
-        throw Error(m_line, m_column, "Unterminated comment.");
+        throw ScannerError(m_line, m_column, "Unterminated comment.");
 
       if (peek() == '*' && peek_next() == '/') {
         depth--;
@@ -250,7 +250,7 @@ private:
     while (peek() != '"' && !is_at_end())
       advance();
     if (is_at_end())
-      throw Error(m_line, m_column, "Unterminated string.");
+      throw ScannerError(m_line, m_column, "Unterminated string.");
 
     advance(); // closing quote
 
@@ -277,10 +277,10 @@ private:
       const double value = std::stod(std::string{raw_value});
       add_token(token::Type::NUMBER, value);
     } catch (const std::invalid_argument &e) {
-      throw Error(m_line, m_column,
+      throw ScannerError(m_line, m_column,
                   std::format("Invalid number: '{}'", raw_value));
     } catch (const std::out_of_range &e) {
-      throw Error(m_line, m_column,
+      throw ScannerError(m_line, m_column,
                   std::format("Number out of range: '{}'", raw_value));
     }
   }

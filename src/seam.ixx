@@ -145,7 +145,7 @@ private:
 
       m_resolver.resolve(program);
       m_interpreter.execute(program);
-    } catch (const error::SeamError &e) {
+    } catch (const Error &e) {
       std::cerr << termcolor::bold << termcolor::red << "[" << e.name() << "] "
                 << termcolor::reset << e.reason() << " " << termcolor::yellow
                 << "(line " << e.location().line << ", column "
