@@ -47,6 +47,7 @@ configure_file(
 )
 
 # Dependencies
+find_package(Threads REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
 find_package(replxx CONFIG REQUIRED)

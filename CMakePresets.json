@@ -11,10 +11,22 @@
       "hidden": true,
       "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "$env{CXX}",
+        "CMAKE_C_COMPILER": "$env{CC}",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_CXX_SCAN_FOR_MODULES": "ON"
+      }
+    },
+    {
+      "name": "ci",
+      "displayName": "CI",
+      "description": "Cross-platform CI build",
+      "inherits": "vcpkg-base",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets"
       }
     },
     {
@@ -84,6 +96,12 @@
   ],
   "buildPresets": [
     {
+      "name": "ci",
+      "configurePreset": "ci",
+      "displayName": "CI Build",
+      "description": "Build for CI"
+    },
+    {
       "name": "debug",
       "configurePreset": "debug",
       "displayName": "Debug Build",
@@ -115,6 +133,13 @@
     }
   ],
   "testPresets": [
+    {
+      "name": "ci",
+      "configurePreset": "ci",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
     {
       "name": "debug",
       "configurePreset": "debug",
