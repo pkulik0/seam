@@ -28,9 +28,27 @@ struct Assignment;
 struct Logical;
 struct Call;
 struct FunctionExpression;
+struct Get;
+struct Set;
+struct ThisExpr;
 
 using Expression = std::variant<Binary, Grouping, Literal, Unary, Ternary,
-                                Variable, Assignment, Logical, Call, FunctionExpression>;
+                                Variable, Assignment, Logical, Call, FunctionExpression, Get, Set, ThisExpr>;
+
+struct Get {
+  std::unique_ptr<Expression> object;
+  Token name;
+};
+
+struct Set {
+  std::unique_ptr<Expression> object;
+  Token name;
+  std::unique_ptr<Expression> value;
+};
+
+struct ThisExpr {
+  Token keyword;
+};
 
 struct BlockStatement;
 
@@ -118,7 +136,12 @@ struct FunctionDeclaration {
   std::unique_ptr<BlockStatement> body;
 };
 
-using Declaration = std::variant<VariableDeclaration, Statement, FunctionDeclaration>;
+struct ClassDeclaration {
+  Token name;
+  std::vector<std::unique_ptr<FunctionDeclaration>> methods;
+};
+
+using Declaration = std::variant<VariableDeclaration, Statement, FunctionDeclaration, ClassDeclaration>;
 
 struct IfStatement {
   std::unique_ptr<Expression> condition;
@@ -221,6 +244,15 @@ private:
               }
               return std::format("fun({}) {}", params, print_block(*e.body));
             },
+            [this](const Get &e) -> std::string {
+              return std::format("({}.{})", print_expression(*e.object), e.name.lexeme());
+            },
+            [this](const Set &e) -> std::string {
+              return std::format("({}.{}) = {}", print_expression(*e.object), e.name.lexeme(), print_expression(*e.value));
+            },
+            [](const ThisExpr &) -> std::string {
+              return "this";
+            },
         },
         expr);
   }
@@ -273,6 +305,14 @@ private:
         statement);
   }
 
+  std::string print_function_declaration(const FunctionDeclaration &f) const {
+    std::string params;
+    for (const auto &param : f.parameters) {
+      params += std::string(param.lexeme()) + ", ";
+    }
+    return std::format("func {}({}) {}", f.name.lexeme(), params, print_block(*f.body));
+  }
+
   std::string print_declaration(const Declaration &declaration) const {
     return std::visit(overload{
                           [this](const VariableDeclaration &d) -> std::string {
@@ -284,11 +324,14 @@ private:
                             return print_statement(s);
                           },
                           [this](const FunctionDeclaration &f) -> std::string {
-                            std::string params;
-                            for (const auto &param : f.parameters) {
-                              params += std::string(param.lexeme()) + ", ";
+                            return print_function_declaration(f);
+                          },
+                          [this](const ClassDeclaration &c) -> std::string {
+                            std::string methods;
+                            for (const auto &method : c.methods) {
+                              methods += std::format("{}", print_function_declaration(*method));
                             }
-                            return std::format("func {}({}) {}", f.name.lexeme(), params, print_block(*f.body));
+                            return std::format("class {}\n{{{}\n}}", c.name.lexeme(), methods);
                           },
                       },
                       declaration);

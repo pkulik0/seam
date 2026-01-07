@@ -25,7 +25,6 @@ using namespace seam::runtime;
 export namespace seam::interpreter {
 
 class Interpreter {
-private:
   std::shared_ptr<Environment> m_globals;
   std::shared_ptr<Environment> m_env;
   std::unordered_map<const Expression *, int> m_locals;
@@ -40,6 +39,10 @@ private:
   };
 
   class ScopeGuard {
+    Interpreter &m_interp;
+    std::shared_ptr<Environment> m_env;
+    std::shared_ptr<Environment> m_previous;
+
   public:
     ScopeGuard(Interpreter &interp,
                std::shared_ptr<Environment> parent = nullptr)
@@ -48,19 +51,17 @@ private:
       m_interp.m_env = m_env;
     }
     ~ScopeGuard() { m_interp.m_env = m_previous; }
-
-  private:
-    Interpreter &m_interp;
-    std::shared_ptr<Environment> m_env;
-    std::shared_ptr<Environment> m_previous;
   };
 
-  struct SeamCallable {
-    SeamCallable(usize arity) : arity(arity) {}
+  class SeamCallable {
+    usize m_arity;
+
+  public:
+    SeamCallable(usize arity) : m_arity(arity) {}
     virtual ~SeamCallable() = default;
     virtual std::any call(Interpreter &interpreter,
                           std::vector<std::any> &&arguments) = 0;
-    usize arity;
+    virtual usize arity() const { return m_arity; }
   };
 
   struct SeamNativeFunction : public SeamCallable {
@@ -75,23 +76,68 @@ private:
     }
   };
 
-  struct SeamFunction : public SeamCallable {
-    const FunctionDeclaration &declaration;
-    std::shared_ptr<Environment> closure;
+  class SeamInstance;
 
+  class SeamFunction : public SeamCallable {
+    const FunctionDeclaration &m_declaration;
+    std::shared_ptr<Environment> m_closure;
+    bool m_is_initializer;
+
+  public:
     SeamFunction(const FunctionDeclaration &declaration,
-                 std::shared_ptr<Environment> closure)
-        : SeamCallable(declaration.parameters.size()), declaration(declaration),
-          closure(closure) {}
+                 std::shared_ptr<Environment> closure, bool is_initializer)
+        : SeamCallable(declaration.parameters.size()),
+          m_declaration(declaration), m_closure(closure),
+          m_is_initializer(is_initializer) {}
+
+    std::shared_ptr<SeamCallable> bind(std::shared_ptr<SeamInstance> instance) {
+      auto env = std::make_shared<Environment>(m_closure);
+      env->define("this", instance);
+      return std::static_pointer_cast<SeamCallable>(
+          std::make_shared<SeamFunction>(m_declaration, env, m_is_initializer));
+    }
+
     std::any call(Interpreter &interpreter,
                   std::vector<std::any> &&arguments) override {
-      ScopeGuard scope(interpreter, closure);
-      for (const auto &param : declaration.parameters) {
+      ScopeGuard scope(interpreter, m_closure);
+      for (const auto &param : m_declaration.parameters) {
         interpreter.m_env->define(param, arguments.front());
         arguments.erase(arguments.begin());
       }
       try {
-        interpreter.execute_block(*declaration.body);
+        interpreter.execute_block(*m_declaration.body);
+      } catch (const ReturnValue &return_value) {
+        if (m_is_initializer) {
+          return m_closure->getAt(0, "this");
+        }
+        return return_value.value();
+      }
+      if (m_is_initializer) {
+        return m_closure->getAt(0, "this");
+      }
+      return std::any(std::nullopt);
+    }
+  };
+
+  class SeamLambda : public SeamCallable {
+    const FunctionExpression &m_expression;
+    std::shared_ptr<Environment> m_closure;
+
+  public:
+    SeamLambda(const FunctionExpression &expression,
+               std::shared_ptr<Environment> closure)
+        : SeamCallable(expression.parameters.size()), m_expression(expression),
+          m_closure(closure) {}
+
+    std::any call(Interpreter &interpreter,
+                  std::vector<std::any> &&arguments) override {
+      ScopeGuard scope(interpreter, m_closure);
+      for (const auto &param : m_expression.parameters) {
+        interpreter.m_env->define(param, arguments.front());
+        arguments.erase(arguments.begin());
+      }
+      try {
+        interpreter.execute_block(*m_expression.body);
       } catch (const ReturnValue &e) {
         return e.value();
       }
@@ -99,27 +145,82 @@ private:
     }
   };
 
-  struct SeamLambda : public SeamCallable {
-    const FunctionExpression &expression;
-    std::shared_ptr<Environment> closure;
+  class SeamClass;
 
-    SeamLambda(const FunctionExpression &expression,
-               std::shared_ptr<Environment> closure)
-        : SeamCallable(expression.parameters.size()), expression(expression),
-          closure(closure) {}
+  class SeamInstance : public std::enable_shared_from_this<SeamInstance> {
+    std::shared_ptr<const SeamClass> m_klass;
+    std::unordered_map<std::string, std::any> m_fields;
+
+  public:
+    SeamInstance(std::shared_ptr<const SeamClass> klass)
+        : m_klass(std::move(klass)) {}
+
+    std::string_view name() const { return m_klass->name(); }
+
+    std::any get(const Token &name) {
+      auto it = m_fields.find(std::string{name.lexeme()});
+      if (it != m_fields.end()) {
+        return it->second;
+      }
+      auto opt_method = m_klass->get_method(name);
+      if (opt_method) {
+        return std::static_pointer_cast<SeamCallable>(
+            opt_method.value()->bind(shared_from_this()));
+      }
+      throw RuntimeError(
+          name, std::format("Undefined property '{}'.", name.lexeme()));
+    }
+
+    void set(const Token &name, const std::any &value) {
+      m_fields[std::string{name.lexeme()}] = value;
+    }
+  };
+
+  class SeamClass : public SeamCallable,
+                    public std::enable_shared_from_this<SeamClass> {
+    Token m_name;
+
+  public:
+    using MethodMap =
+        std::unordered_map<std::string, std::shared_ptr<SeamFunction>>;
+
+  private:
+    MethodMap m_methods;
+
+  public:
+    SeamClass(const Token &name, MethodMap &&methods)
+        : SeamCallable(0), m_name(name), m_methods(std::move(methods)) {}
+
     std::any call(Interpreter &interpreter,
                   std::vector<std::any> &&arguments) override {
-      ScopeGuard scope(interpreter, closure);
-      for (const auto &param : expression.parameters) {
-        interpreter.m_env->define(param, arguments.front());
-        arguments.erase(arguments.begin());
+      auto instance = std::make_shared<SeamInstance>(shared_from_this());
+      const auto opt_init = get_method("init");
+      if (opt_init) {
+        opt_init.value()->bind(instance)->call(interpreter,
+                                               std::move(arguments));
       }
-      try {
-        interpreter.execute_block(*expression.body);
-      } catch (const ReturnValue &e) {
-        return e.value();
+      return instance;
+    }
+
+    std::string_view name() const { return m_name.lexeme(); }
+
+    std::optional<std::shared_ptr<SeamFunction>>
+    get_method(const Token &name) const {
+      return get_method(std::string{name.lexeme()});
+    }
+
+    std::optional<std::shared_ptr<SeamFunction>>
+    get_method(const std::string &name) const {
+      auto it = m_methods.find(name);
+      if (it != m_methods.end()) {
+        return it->second;
       }
-      return std::any(std::nullopt);
+      return std::nullopt;
+    }
+
+    usize arity() const override {
+      const auto opt_init = get_method("init");
+      return opt_init ? opt_init.value()->arity() : 0;
     }
   };
 
@@ -206,6 +307,10 @@ private:
     }
     if (value.type() == typeid(std::string)) {
       return std::any_cast<std::string>(value);
+    }
+    if (value.type() == typeid(std::shared_ptr<SeamInstance>)) {
+      auto instance = std::any_cast<std::shared_ptr<SeamInstance>>(value);
+      return std::format("{} instance", instance->name());
     }
     return std::string(value.type().name());
   }
@@ -338,6 +443,31 @@ private:
               return std::static_pointer_cast<SeamCallable>(
                   std::make_shared<SeamLambda>(e, m_env));
             },
+            [this](const Get &e) -> std::any {
+              std::any object = evaluate(*e.object);
+              if (object.type() != typeid(std::shared_ptr<SeamInstance>)) {
+                throw RuntimeError(e.name, "Only instances have properties.");
+              }
+              auto instance =
+                  std::any_cast<std::shared_ptr<SeamInstance>>(object);
+              return instance->get(e.name);
+            },
+            [this](const Set &e) -> std::any {
+              std::any value = evaluate(*e.value);
+              std::any object = evaluate(*e.object);
+              if (object.type() != typeid(std::shared_ptr<SeamInstance>)) {
+                throw RuntimeError(e.name, "Only instances have properties.");
+              }
+
+              auto instance =
+                  std::any_cast<std::shared_ptr<SeamInstance>>(object);
+              instance->set(e.name, value);
+
+              return value;
+            },
+            [this, expr_ptr](const ThisExpr &e) -> std::any {
+              return lookUpVariable(e.keyword, expr_ptr);
+            },
         },
         expr);
   }
@@ -348,15 +478,15 @@ private:
       throw RuntimeError(paren, "Can only call functions and classes.");
     }
     auto callable = std::any_cast<std::shared_ptr<SeamCallable>>(callee);
-    if (callable->arity != arguments.size()) {
-      throw RuntimeError(paren, std::format("Expected {} arguments but got {}.",
-                                            callable->arity, arguments.size()));
+    if (callable->arity() != arguments.size()) {
+      throw RuntimeError(paren,
+                         std::format("Expected {} arguments but got {}.",
+                                     callable->arity(), arguments.size()));
     }
     return callable->call(*this, std::move(arguments));
   }
 
   void execute_block(const BlockStatement &block) {
-    ScopeGuard scope(*this);
     for (const auto &decl : block.declarations) {
       execute_declaration(decl);
     }
@@ -416,8 +546,22 @@ private:
                    },
                    [this](const FunctionDeclaration &d) -> void {
                      std::shared_ptr<SeamCallable> function =
-                         std::make_shared<SeamFunction>(d, m_env);
+                         std::make_shared<SeamFunction>(d, m_env, false);
                      m_env->define(d.name, function);
+                   },
+                   [this](const ClassDeclaration &d) -> void {
+                     m_env->define(d.name, std::nullopt);
+                     SeamClass::MethodMap methods;
+                     for (const auto &method : d.methods) {
+                       const auto name = std::string{method->name.lexeme()};
+                       const bool is_initializer = name == "init";
+                       methods[name] = std::make_shared<SeamFunction>(
+                           *method, m_env, is_initializer);
+                     }
+                     std::shared_ptr<SeamCallable> class_ =
+                         std::make_shared<SeamClass>(d.name,
+                                                     std::move(methods));
+                     m_env->assign(d.name, class_);
                    },
                },
                declaration);

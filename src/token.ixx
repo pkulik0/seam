@@ -1,9 +1,10 @@
 module;
 
-#include <string_view>
-#include <optional>
 #include <any>
 #include <format>
+#include <optional>
+#include <string>
+#include <string_view>
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -85,11 +86,11 @@ public:
   usize line() const { return m_line; }
 
   usize column() const { return m_column; }
-  
+
 
 private:
   Type m_type;
-  std::string_view m_lexeme;
+  std::string m_lexeme;
   std::optional<std::any> m_literal;
   usize m_line = 0;
   usize m_column = 0;

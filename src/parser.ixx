@@ -2,6 +2,7 @@ module;
 
 #include <any>
 #include <format>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <print>
@@ -9,9 +10,9 @@ module;
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
-#include <iostream>
 #include <termcolor/termcolor.hpp>
 
 export module seam.parser;
@@ -42,8 +43,8 @@ public:
             static_cast<int>(m_token.column())};
   }
 
-  [[nodiscard]] auto what() const noexcept -> const char* override {
-	  return m_message.c_str();
+  [[nodiscard]] auto what() const noexcept -> const char * override {
+    return m_message.c_str();
   }
 
 private:
@@ -137,6 +138,9 @@ private:
 
   std::optional<Declaration> parse_declaration() {
     try {
+      if (match(Type::CLASS)) {
+        return parse_class_declaration();
+      }
       if (match(Type::FUN)) {
         return parse_function_declaration();
       }
@@ -154,18 +158,34 @@ private:
     }
   }
 
+  ClassDeclaration parse_class_declaration() {
+    auto name = consume(Type::IDENTIFIER, "Expected class name.");
+    consume(Type::LEFT_BRACE, "Expected '{' before class body.");
+
+    std::vector<std::unique_ptr<FunctionDeclaration>> methods;
+    while (!check(Type::RIGHT_BRACE) && !is_at_end()) {
+      methods.emplace_back(
+          std::make_unique<FunctionDeclaration>(parse_function_declaration()));
+    }
+
+    consume(Type::RIGHT_BRACE, "Expected '}' after class body.");
+    return ClassDeclaration{name, std::move(methods)};
+  }
+
   FunctionDeclaration parse_function_declaration() {
     auto name = consume(Type::IDENTIFIER, "Expected function name.");
     consume(Type::LEFT_PAREN, "Expected '(' after function name.");
     std::vector<Token> parameters;
     if (!check(Type::RIGHT_PAREN)) {
       do {
-        parameters.push_back(consume(Type::IDENTIFIER, "Expected parameter name."));
+        parameters.push_back(
+            consume(Type::IDENTIFIER, "Expected parameter name."));
       } while (match(Type::COMMA));
     }
     consume(Type::RIGHT_PAREN, "Expected ')' after parameters.");
     consume(Type::LEFT_BRACE, "Expected '{' before function body.");
-    return FunctionDeclaration{name, std::move(parameters), std::make_unique<BlockStatement>(parse_block())};
+    return FunctionDeclaration{name, std::move(parameters),
+                               std::make_unique<BlockStatement>(parse_block())};
   }
 
   VariableDeclaration parse_variable_declaration() {
@@ -182,7 +202,7 @@ private:
     if (match(Type::WHILE)) {
       return parse_while_statement();
     }
-    if(match(Type::FOR)) {
+    if (match(Type::FOR)) {
       return parse_for_statement();
     }
     if (match(Type::IF)) {
@@ -240,10 +260,8 @@ private:
 
     auto body = std::make_unique<Statement>(parse_statement());
 
-    return ForStatement{std::move(initializer),
-                        std::move(condition),
-                        std::move(increment),
-                        std::move(body)};
+    return ForStatement{std::move(initializer), std::move(condition),
+                        std::move(increment), std::move(body)};
   }
 
   WhileStatement parse_while_statement() {
@@ -298,14 +316,25 @@ private:
   Expression parse_expression() { return parse_assignment(); }
 
   Expression parse_assignment() {
-    if (check(Type::IDENTIFIER) && peek_next().type() == Type::EQUAL) {
-      auto name = advance();
-      advance(); // consume '='
+    auto expr = parse_ternary();
+
+    if (match(Type::EQUAL)) {
+      Token equals = previous();
       auto value = parse_assignment();
-      return Assignment{name, make_expression(std::move(value))};
+
+      if (std::holds_alternative<Variable>(expr)) {
+        Token name = std::get<Variable>(expr).name;
+        return Assignment{name, make_expression(std::move(value))};
+      } else if (std::holds_alternative<Get>(expr)) {
+        Get &get = std::get<Get>(expr);
+        return Set{std::move(get.object), get.name,
+                   make_expression(std::move(value))};
+      }
+
+      throw ParserError(equals, "Invalid assignment target.");
     }
 
-    return parse_ternary();
+    return expr;
   }
 
   Expression parse_ternary() {
@@ -409,13 +438,24 @@ private:
 
   Expression parse_call() {
     auto expr = parse_primary();
-    while (match(Type::LEFT_PAREN)) {
-      expr = parse_call_arguments(std::move(expr));
+    while (true) {
+      if (match(Type::LEFT_PAREN)) {
+        expr = parse_call_arguments(std::move(expr));
+      } else if (match(Type::DOT)) {
+        expr = parse_get(std::move(expr));
+      } else {
+        break;
+      }
     }
     return expr;
   }
 
-  Expression parse_call_arguments(Expression&& expr) {
+  Get parse_get(Expression &&expr) {
+    auto name = consume(Type::IDENTIFIER, "Expected property name.");
+    return Get{make_expression(std::move(expr)), name};
+  }
+
+  Call parse_call_arguments(Expression &&expr) {
     std::vector<std::unique_ptr<Expression>> arguments;
     if (!check(Type::RIGHT_PAREN)) {
       do {
@@ -434,7 +474,8 @@ private:
     std::vector<Token> parameters;
     if (!check(Type::RIGHT_PAREN)) {
       do {
-        parameters.push_back(consume(Type::IDENTIFIER, "Expected parameter name."));
+        parameters.push_back(
+            consume(Type::IDENTIFIER, "Expected parameter name."));
       } while (match(Type::COMMA));
     }
     consume(Type::RIGHT_PAREN, "Expected ')' after parameters.");
@@ -463,6 +504,10 @@ private:
 
     if (match(Type::IDENTIFIER)) {
       return Variable{previous()};
+    }
+
+    if (match(Type::THIS)) {
+      return ThisExpr{previous()};
     }
 
     if (match(Type::LEFT_PAREN)) {

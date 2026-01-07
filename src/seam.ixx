@@ -57,8 +57,8 @@ public:
 
   void run_repl() {
     std::cout << termcolor::bold << termcolor::cyan << "Welcome to Seam "
-              << termcolor::reset << "(" << version::git_tag
-              << ")" << std::endl;
+              << termcolor::reset << "(" << version::git_tag << ")"
+              << std::endl;
     replxx::Replxx rx;
 
     const auto history_path =
@@ -117,6 +117,26 @@ public:
     std::println("Build time: {}\n", version::build_time);
   }
 
+  void run_impl(const std::string_view source) {
+    scanner::Scanner scanner{source};
+    const auto tokens = scanner.scan_tokens();
+
+    // TODO: Use comments to add information to the AST
+    std::vector<token::Token> filtered_tokens;
+    std::ranges::copy_if(
+        tokens, std::back_inserter(filtered_tokens),
+        [](const auto &token) { return token.type() != token::Type::COMMENT; });
+
+    parser::Parser parser{filtered_tokens};
+    const auto &program = m_programs.emplace_back(parser.parse());
+    if (m_options.is_verbose) {
+      std::println("\t{}", m_ast_printer.print(program));
+    }
+
+    m_resolver.resolve(program);
+    m_interpreter.execute(program);
+  }
+
 private:
   std::string m_prompt{">> "};
   bool m_had_error{false};
@@ -125,26 +145,11 @@ private:
   interpreter::Interpreter m_interpreter;
   resolver::Resolver m_resolver{m_interpreter};
   ast::AstPrinter m_ast_printer;
+  std::vector<ast::Program> m_programs;
 
   void run(const std::string_view source) {
     try {
-      scanner::Scanner scanner{source};
-      const auto tokens = scanner.scan_tokens();
-
-      std::vector<token::Token> filtered_tokens;
-      std::ranges::copy_if(tokens, std::back_inserter(filtered_tokens),
-                           [](const auto &token) {
-                             return token.type() != token::Type::COMMENT;
-                           });
-
-      parser::Parser parser{filtered_tokens};
-      const auto program = parser.parse();
-      if (m_options.is_verbose) {
-        std::println("\t{}", m_ast_printer.print(program));
-      }
-
-      m_resolver.resolve(program);
-      m_interpreter.execute(program);
+      run_impl(source);
     } catch (const Error &e) {
       std::cerr << termcolor::bold << termcolor::red << "[" << e.name() << "] "
                 << termcolor::reset << e.reason() << " " << termcolor::yellow
