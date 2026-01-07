@@ -56,7 +56,9 @@ public:
   }
 
   void run_repl() {
-    std::println("Welcome to Seam {}", version::git_tag);
+    std::cout << termcolor::bold << termcolor::cyan << "Welcome to Seam "
+              << termcolor::reset << "(" << version::git_tag
+              << ")" << std::endl;
     replxx::Replxx rx;
 
     const auto history_path =
@@ -150,9 +152,8 @@ private:
                 << e.location().column << ")" << termcolor::reset << std::endl;
       m_had_error = true;
     } catch (const std::exception &e) {
-      std::cerr << termcolor::bold << termcolor::red
-                << "[Error] " << termcolor::reset << e.what()
-                << std::endl;
+      std::cerr << termcolor::bold << termcolor::red << "[Error] "
+                << termcolor::reset << e.what() << std::endl;
       m_had_error = true;
     }
   }
