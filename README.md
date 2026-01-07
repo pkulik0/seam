@@ -92,11 +92,11 @@ let result = age > 18 ? "adult" : "minor";
 **If/Else:**
 ```javascript
 if (score >= 90) {
-    print "A";
+    print("A");
 } else if (score >= 80) {
-    print "B";
+    print("B");
 } else {
-    print "C";
+    print("C");
 }
 ```
 
@@ -104,7 +104,7 @@ if (score >= 90) {
 ```javascript
 let i = 0;
 while (i < 5) {
-    print i;
+    print(i);
     i = i + 1;
 }
 ```
@@ -112,7 +112,7 @@ while (i < 5) {
 **For Loop:**
 ```javascript
 for (let i = 0; i < 5; i = i + 1) {
-    print i;
+    print(i);
 }
 ```
 
@@ -124,7 +124,7 @@ fn greet(name) {
     return "Hello, " + name + "!";
 }
 
-print greet("World");  // Hello, World!
+print(greet("World"));  // Hello, World!
 ```
 
 **Multiple Parameters:**
@@ -133,7 +133,7 @@ fn add(a, b) {
     return a + b;
 }
 
-print add(2, 3);  // 5
+print(add(2, 3));  // 5
 ```
 
 **Lambda Expressions:**
@@ -142,7 +142,7 @@ let multiply = fn(a, b) {
     return a * b;
 };
 
-print multiply(4, 5);  // 20
+print(multiply(4, 5));  // 20
 ```
 
 **Closures:**
@@ -156,9 +156,9 @@ fn makeCounter() {
 }
 
 let counter = makeCounter();
-print counter();  // 1
-print counter();  // 2
-print counter();  // 3
+print(counter());  // 1
+print(counter());  // 2
+print(counter());  // 3
 ```
 
 **Higher-Order Functions:**
@@ -171,7 +171,7 @@ fn double(n) {
     return n * 2;
 }
 
-print applyTwice(double, 5);  // 20
+print(applyTwice(double, 5));  // 20
 ```
 
 ### Structs
@@ -185,7 +185,7 @@ struct Point {
     }
 
     display() {
-        print "(" + self.x + ", " + self.y + ")";
+        print("(" + self.x + ", " + self.y + ")");
     }
 }
 
@@ -211,8 +211,8 @@ struct Rectangle {
 }
 
 let rect = Rectangle(5, 3);
-print rect.area();       // 15
-print rect.perimeter();  // 16
+print(rect.area());       // 15
+print(rect.perimeter());  // 16
 ```
 
 **Static Methods:**
@@ -227,8 +227,8 @@ struct Math {
     }
 }
 
-print Math.square(5);    // 25
-print Math.max(10, 20);  // 20
+print(Math.square(5));    // 25
+print(Math.max(10, 20));  // 20
 ```
 
 ### Inheritance
@@ -242,7 +242,7 @@ struct Animal {
     }
 
     speak() {
-        print self.name + " makes a sound";
+        print(self.name + " makes a sound");
     }
 }
 
@@ -253,11 +253,11 @@ struct Dog + Animal {
     }
 
     speak() {
-        print self.name + " barks!";
+        print(self.name + " barks!");
     }
 
     fetch() {
-        print self.name + " fetches the ball";
+        print(self.name + " fetches the ball");
     }
 }
 
@@ -271,7 +271,7 @@ dog.fetch();  // Buddy fetches the ball
 struct Cat + Animal {
     speak() {
         parent.speak();  // Call parent's speak
-        print "Meow!";
+        print("Meow!");
     }
 }
 
@@ -294,13 +294,13 @@ cat.speak();
 /* Nested /* comments */ are supported */
 ```
 
-### Print Statement
+### Print Function
 
 ```javascript
-print "Hello, World!";
-print 42;
-print true;
-print 2 + 2;
+print("Hello, World!");
+print(42);
+print(true);
+print(2 + 2);
 ```
 
 ## Example Programs
@@ -316,7 +316,7 @@ fn fib(n) {
 }
 
 for (let i = 0; i < 10; i = i + 1) {
-    print fib(i);
+    print(fib(i));
 }
 // Output: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34
 ```
@@ -331,7 +331,7 @@ fn factorial(n) {
     return n * factorial(n - 1);
 }
 
-print factorial(5);  // 120
+print(factorial(5));  // 120
 ```
 
 ### Bank Account
@@ -345,16 +345,16 @@ struct BankAccount {
 
     deposit(amount) {
         self.balance = self.balance + amount;
-        print "Deposited " + amount;
+        print("Deposited " + amount);
     }
 
     withdraw(amount) {
         if (amount > self.balance) {
-            print "Insufficient funds";
+            print("Insufficient funds");
             return false;
         }
         self.balance = self.balance - amount;
-        print "Withdrew " + amount;
+        print("Withdrew " + amount);
         return true;
     }
 
@@ -366,7 +366,7 @@ struct BankAccount {
 let account = BankAccount("Alice", 1000);
 account.deposit(500);
 account.withdraw(200);
-print account.getBalance();  // 1300
+print(account.getBalance());  // 1300
 ```
 
 ### Linked List
@@ -400,7 +400,7 @@ struct LinkedList {
     printList() {
         let current = self.head;
         while (current != nil) {
-            print current.value;
+            print(current.value);
             current = current.next;
         }
     }

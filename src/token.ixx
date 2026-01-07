@@ -55,7 +55,6 @@ enum class Type {
   IF,
   NIL,
   OR,
-  PRINT,
   RETURN,
   STATIC,
   PARENT,

@@ -23,7 +23,7 @@ TEST_F(Inheritance, InheritMethod) {
   std::string source = R"(
     struct Animal {
       speak() {
-        print "sound";
+        print("sound");
       }
     }
     struct Dog + Animal {}
@@ -38,12 +38,12 @@ TEST_F(Inheritance, OverrideMethod) {
   std::string source = R"(
     struct Animal {
       speak() {
-        print "generic sound";
+        print("generic sound");
       }
     }
     struct Dog + Animal {
       speak() {
-        print "bark";
+        print("bark");
       }
     }
     let d = Dog();
@@ -60,12 +60,12 @@ TEST_F(Inheritance, InheritMultipleMethods) {
         return "shape";
       }
       describe() {
-        print "I am a shape";
+        print("I am a shape");
       }
     }
     struct Circle + Shape {}
     let c = Circle();
-    print c.getType();
+    print(c.getType());
     c.describe();
   )";
   EXPECT_NO_THROW(run(source));
@@ -82,7 +82,7 @@ TEST_F(Inheritance, InheritedMethodAccessesThis) {
     struct Dog + Animal {}
     let d = Dog();
     d.name = "Rex";
-    print d.getName();
+    print(d.getName());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Rex\n");
@@ -92,17 +92,17 @@ TEST_F(Inheritance, MultiLevelInheritance) {
   std::string source = R"(
     struct A {
       methodA() {
-        print "A";
+        print("A");
       }
     }
     struct B + A {
       methodB() {
-        print "B";
+        print("B");
       }
     }
     struct C + B {
       methodC() {
-        print "C";
+        print("C");
       }
     }
     let c = C();
@@ -118,12 +118,12 @@ TEST_F(Inheritance, OverrideInChain) {
   std::string source = R"(
     struct A {
       greet() {
-        print "A";
+        print("A");
       }
     }
     struct B + A {
       greet() {
-        print "B";
+        print("B");
       }
     }
     struct C + B {}
@@ -138,12 +138,12 @@ TEST_F(Inheritance, ChildCanAddMethods) {
   std::string source = R"(
     struct Parent {
       parentMethod() {
-        print "parent";
+        print("parent");
       }
     }
     struct Child + Parent {
       childMethod() {
-        print "child";
+        print("child");
       }
     }
     let c = Child();
@@ -168,7 +168,7 @@ TEST_F(Inheritance, ChildInitCallsOwnMethods) {
       }
     }
     let c = Child();
-    print c.value;
+    print(c.value);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "20\n");
@@ -178,12 +178,12 @@ TEST_F(Inheritance, ParentAndChildInstances) {
   std::string source = R"(
     struct Animal {
       speak() {
-        print "animal sound";
+        print("animal sound");
       }
     }
     struct Dog + Animal {
       speak() {
-        print "bark";
+        print("bark");
       }
     }
     let a = Animal();
@@ -199,12 +199,12 @@ TEST_F(Inheritance, ChildMethodCallsInheritedMethod) {
   std::string source = R"(
     struct A {
       method() {
-        print "A";
+        print("A");
       }
     }
     struct B + A {
       method() {
-        print "B";
+        print("B");
         parent.method();
       }
     }
@@ -219,20 +219,20 @@ TEST_F(Inheritance, DeepInheritanceWithSuper) {
   std::string source = R"(
     struct A {
       method() {
-        print "A";
+        print("A");
       }
     }
 
     struct B + A {
       method() {
-        print "B";
+        print("B");
         parent.method();
       }
     }
 
     struct C + B {
       method() {
-        print "C";
+        print("C");
         parent.method();
       }
     }

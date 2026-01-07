@@ -25,7 +25,7 @@ TEST_F(Classes, EmptyStruct) {
   std::string source = R"(
     struct Foo {}
     let f = Foo();
-    print f;
+    print(f);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Foo instance\n");
@@ -36,7 +36,7 @@ TEST_F(Classes, StructAsValue) {
     struct Foo {}
     let cls = Foo;
     let instance = cls();
-    print instance;
+    print(instance);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Foo instance\n");
@@ -49,8 +49,8 @@ TEST_F(Classes, MultipleInstances) {
     let b = Counter();
     a.count = 1;
     b.count = 2;
-    print a.count;
-    print b.count;
+    print(a.count);
+    print(b.count);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "1\n2\n");
@@ -63,7 +63,7 @@ TEST_F(Classes, SetProperty) {
     struct Obj {}
     let o = Obj();
     o.x = 5;
-    print o.x;
+    print(o.x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "5\n");
@@ -78,8 +78,8 @@ TEST_F(Classes, PropertyIndependence) {
     p1.y = 20;
     p2.x = 30;
     p2.y = 40;
-    print p1.x;
-    print p2.x;
+    print(p1.x);
+    print(p2.x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "10\n30\n");
@@ -89,7 +89,7 @@ TEST_F(Classes, GetUndefinedPropertyError) {
   std::string source = R"(
     struct Obj {}
     let o = Obj();
-    print o.undefined;
+    print(o.undefined);
   )";
   EXPECT_THROW(run(source), Error);
 }
@@ -100,7 +100,7 @@ TEST_F(Classes, BasicMethod) {
   std::string source = R"(
     struct Greeter {
       greet() {
-        print "hello";
+        print("hello");
       }
     }
     let g = Greeter();
@@ -118,7 +118,7 @@ TEST_F(Classes, MethodWithParams) {
       }
     }
     let m = Math();
-    print m.add(3, 4);
+    print(m.add(3, 4));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "7\n");
@@ -132,7 +132,7 @@ TEST_F(Classes, MethodReturnsValue) {
       }
     }
     let c = Calculator();
-    print c.square(5);
+    print(c.square(5));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "25\n");
@@ -147,7 +147,7 @@ TEST_F(Classes, MethodAccessesThis) {
     }
     let p = Person();
     p.name = "Alice";
-    print p.getName();
+    print(p.getName());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Alice\n");
@@ -164,7 +164,7 @@ TEST_F(Classes, MethodModifiesThis) {
     c.count = 0;
     c.increment();
     c.increment();
-    print c.count;
+    print(c.count);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "2\n");
@@ -186,7 +186,7 @@ TEST_F(Classes, ChainedMethodCalls) {
       }
     }
     let b = Builder();
-    print b.setX(10).setY(20).build();
+    print(b.setX(10).setY(20).build());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "30\n");
@@ -203,7 +203,7 @@ TEST_F(Classes, MethodCallsOtherMethod) {
       }
     }
     let m = Math();
-    print m.quadruple(5);
+    print(m.quadruple(5));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "20\n");
@@ -226,7 +226,7 @@ TEST_F(Classes, MultipleMethods) {
     acc.balance = 100;
     acc.deposit(50);
     acc.withdraw(30);
-    print acc.getBalance();
+    print(acc.getBalance());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "120\n");
@@ -239,7 +239,7 @@ TEST_F(Classes, FluentInterface) {
       add(n) { self.value = self.value + n; return self; }
       mul(n) { self.value = self.value * n; return self; }
     }
-    print Calc().add(5).mul(3).add(2).value;
+    print(Calc().add(5).mul(3).add(2).value);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "17\n");
@@ -248,11 +248,11 @@ TEST_F(Classes, FluentInterface) {
 TEST_F(Classes, PropertyShadowsMethod) {
   std::string source = R"(
     struct A {
-      m() { print "method"; }
+      m() { print("method"); }
     }
     let a = A();
     a.m = "property";
-    print a.m;
+    print(a.m);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "property\n");

@@ -503,7 +503,7 @@ TEST(Scanner, VerifiesComplexTokenSequenceData) {
   EXPECT_EQ(tokens[6].column(), 14);
 
   // print
-  EXPECT_EQ(tokens[7].type(), token::Type::PRINT);
+  EXPECT_EQ(tokens[7].type(), token::Type::IDENTIFIER);
   EXPECT_EQ(tokens[7].line(), 2);
   EXPECT_EQ(tokens[7].column(), 3);
 

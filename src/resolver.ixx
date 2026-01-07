@@ -197,7 +197,6 @@ private:
   void resolve(const Statement &stmt) {
     std::visit(
         overload{
-            [this](const PrintStatement &s) -> void { resolve(*s.expression); },
             [this](const Expression &e) -> void { resolve(e); },
             [this](const BlockStatement &b) -> void {
               begin_scope();

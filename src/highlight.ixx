@@ -118,7 +118,6 @@ private:
     case token::Type::STRUCT:
     case token::Type::STATIC:
     case token::Type::RETURN:
-    case token::Type::PRINT:
       return TokenCategory::KEYWORD;
 
     case token::Type::TRUE:

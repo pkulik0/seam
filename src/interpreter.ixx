@@ -554,9 +554,6 @@ class Interpreter {
   void execute_statement(const Statement &statement) {
     std::visit(
         overload{
-            [this](const PrintStatement &s) -> void {
-              std::println(m_out, "{}", stringify(evaluate(*s.expression)));
-            },
             [this](const Expression &e) -> void { evaluate(e); },
             [this](const BlockStatement &b) -> void {
               ScopeGuard scope(*this);
@@ -688,6 +685,14 @@ public:
         },
         0);
     m_globals->define("clock", clock);
+
+    std::shared_ptr<SeamCallable> print = std::make_shared<SeamNativeFn>(
+        [](Interpreter &interp, std::vector<std::any> &&args) -> std::any {
+          std::println(interp.m_out, "{}", interp.stringify(args[0]));
+          return std::any{};
+        },
+        1);
+    m_globals->define("print", print);
   }
 
   void execute(const Program &program) {

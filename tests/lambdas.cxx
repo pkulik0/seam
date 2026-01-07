@@ -24,7 +24,7 @@ TEST_F(Lambdas, LambdaWithReturn) {
     let multiply = fn(a, b) {
       return a * b;
     };
-    print multiply(6, 7);
+    print(multiply(6, 7));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "42\n");
@@ -36,7 +36,7 @@ TEST_F(Lambdas, LambdaAsReturn) {
       return fn(n) { return n * factor; };
     }
     let twice = makeMultiplier(2);
-    print twice(5);
+    print(twice(5));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "10\n");
@@ -51,7 +51,7 @@ TEST_F(Lambdas, NestedLambdas) {
         };
       };
     };
-    print f(1)(2)(3);
+    print(f(1)(2)(3));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "6\n");
@@ -64,7 +64,7 @@ TEST_F(Lambdas, LambdaCapturesThis) {
         self.name = name;
       }
       getGreeter() {
-        return fn() { print "Hi, " + self.name; };
+        return fn() { print("Hi, " + self.name); };
       }
     }
     let g = Greeter("Seam");
@@ -81,7 +81,7 @@ TEST_F(Lambdas, LambdaCaptureAndShadow) {
     let f = nil;
     {
       let x = "inner";
-      f = fn() { print x; };
+      f = fn() { print(x); };
     }
     f();
   )";
@@ -94,7 +94,7 @@ TEST_F(Lambdas, LambdaWithSideEffects) {
     let result = 0;
     let f = fn() { result = 42; };
     f();
-    print result;
+    print(result);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "42\n");
@@ -106,7 +106,7 @@ TEST_F(Lambdas, LambdaModifiesCapture) {
     let f = fn() { x = x + 5; };
     f();
     f();
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "20\n");
@@ -114,7 +114,7 @@ TEST_F(Lambdas, LambdaModifiesCapture) {
 
 TEST_F(Lambdas, LambdaPrints) {
   std::string source = R"(
-    let f = fn() { print "hello from lambda"; };
+    let f = fn() { print("hello from lambda"); };
     f();
   )";
   EXPECT_NO_THROW(run(source));
@@ -123,7 +123,7 @@ TEST_F(Lambdas, LambdaPrints) {
 
 TEST_F(Lambdas, LambdaInVariable) {
   std::string source = R"(
-    let greet = fn() { print "hi"; };
+    let greet = fn() { print("hi"); };
     greet();
     greet();
   )";
@@ -138,7 +138,7 @@ TEST_F(Lambdas, LambdaPassedToFunction) {
       f();
     }
     execute(fn() { output = "executed"; });
-    print output;
+    print(output);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "executed\n");

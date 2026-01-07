@@ -117,10 +117,6 @@ template <typename T> std::unique_ptr<Expression> make_expression(T &&expr) {
   return std::make_unique<Expression>(std::forward<T>(expr));
 }
 
-struct PrintStatement {
-  std::unique_ptr<Expression> expression;
-};
-
 struct BlockStatement;
 struct IfStatement;
 struct WhileStatement;
@@ -131,7 +127,7 @@ struct ReturnStatement {
   std::unique_ptr<Expression> value;
 };
 
-using Statement = std::variant<PrintStatement, Expression, BlockStatement,
+using Statement = std::variant<Expression, BlockStatement,
                                IfStatement, WhileStatement, ForStatement,
                                ReturnStatement>;
 
@@ -442,12 +438,6 @@ private:
                        const std::string &prefix, bool is_last) const {
     std::visit(
         overload{
-            [&](const PrintStatement &s) {
-              print_indent(os, prefix, is_last);
-              print_node(os, "Print");
-              os << "\n";
-              print_expression(os, *s.expression, child_prefix(prefix, is_last), true);
-            },
             [&](const Expression &e) {
               print_indent(os, prefix, is_last);
               print_node(os, "ExprStmt");

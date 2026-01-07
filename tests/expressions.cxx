@@ -23,7 +23,7 @@ struct Expressions : public fixtures::Execution {};
 
 TEST_F(Expressions, Addition) {
   std::string source = R"(
-    print 5 + 3;
+    print(5 + 3);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "8\n");
@@ -31,7 +31,7 @@ TEST_F(Expressions, Addition) {
 
 TEST_F(Expressions, Subtraction) {
   std::string source = R"(
-    print 10 - 4;
+    print(10 - 4);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "6\n");
@@ -39,7 +39,7 @@ TEST_F(Expressions, Subtraction) {
 
 TEST_F(Expressions, Multiplication) {
   std::string source = R"(
-    print 6 * 7;
+    print(6 * 7);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "42\n");
@@ -47,7 +47,7 @@ TEST_F(Expressions, Multiplication) {
 
 TEST_F(Expressions, Division) {
   std::string source = R"(
-    print 15 / 3;
+    print(15 / 3);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "5\n");
@@ -55,7 +55,7 @@ TEST_F(Expressions, Division) {
 
 TEST_F(Expressions, FloatArithmetic) {
   std::string source = R"(
-    print 3.5 * 2;
+    print(3.5 * 2);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "7\n");
@@ -63,7 +63,7 @@ TEST_F(Expressions, FloatArithmetic) {
 
 TEST_F(Expressions, Precedence) {
   std::string source = R"(
-    print 2 + 3 * 4;
+    print(2 + 3 * 4);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "14\n");
@@ -71,7 +71,7 @@ TEST_F(Expressions, Precedence) {
 
 TEST_F(Expressions, GroupingOverrides) {
   std::string source = R"(
-    print (2 + 3) * 4;
+    print((2 + 3) * 4);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "20\n");
@@ -79,7 +79,7 @@ TEST_F(Expressions, GroupingOverrides) {
 
 TEST_F(Expressions, ComplexExpression) {
   std::string source = R"(
-    print 10 - 2 * 3 + 4 / 2;
+    print(10 - 2 * 3 + 4 / 2);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "6\n");
@@ -89,7 +89,7 @@ TEST_F(Expressions, ComplexExpression) {
 
 TEST_F(Expressions, GreaterThan) {
   std::string source = R"(
-    print 5 > 3;
+    print(5 > 3);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -97,7 +97,7 @@ TEST_F(Expressions, GreaterThan) {
 
 TEST_F(Expressions, GreaterThanFalse) {
   std::string source = R"(
-    print 3 > 5;
+    print(3 > 5);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "false\n");
@@ -105,7 +105,7 @@ TEST_F(Expressions, GreaterThanFalse) {
 
 TEST_F(Expressions, GreaterEqual) {
   std::string source = R"(
-    print 5 >= 5;
+    print(5 >= 5);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -113,7 +113,7 @@ TEST_F(Expressions, GreaterEqual) {
 
 TEST_F(Expressions, LessThan) {
   std::string source = R"(
-    print 3 < 5;
+    print(3 < 5);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -121,7 +121,7 @@ TEST_F(Expressions, LessThan) {
 
 TEST_F(Expressions, LessEqual) {
   std::string source = R"(
-    print 5 <= 5;
+    print(5 <= 5);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -129,7 +129,7 @@ TEST_F(Expressions, LessEqual) {
 
 TEST_F(Expressions, EqualNumbers) {
   std::string source = R"(
-    print 5 == 5;
+    print(5 == 5);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -137,7 +137,7 @@ TEST_F(Expressions, EqualNumbers) {
 
 TEST_F(Expressions, EqualStrings) {
   std::string source = R"(
-    print "a" == "a";
+    print("a" == "a");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -145,7 +145,7 @@ TEST_F(Expressions, EqualStrings) {
 
 TEST_F(Expressions, EqualBooleans) {
   std::string source = R"(
-    print true == true;
+    print(true == true);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -153,7 +153,7 @@ TEST_F(Expressions, EqualBooleans) {
 
 TEST_F(Expressions, NotEqual) {
   std::string source = R"(
-    print 5 != 3;
+    print(5 != 3);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -161,7 +161,7 @@ TEST_F(Expressions, NotEqual) {
 
 TEST_F(Expressions, NilEquality) {
   std::string source = R"(
-    print nil == nil;
+    print(nil == nil);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -169,7 +169,7 @@ TEST_F(Expressions, NilEquality) {
 
 TEST_F(Expressions, DifferentTypesNotEqual) {
   std::string source = R"(
-    print 5 == "5";
+    print(5 == "5");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "false\n");
@@ -179,7 +179,7 @@ TEST_F(Expressions, DifferentTypesNotEqual) {
 
 TEST_F(Expressions, StringConcat) {
   std::string source = R"(
-    print "Hello, " + "World!";
+    print("Hello, " + "World!");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Hello, World!\n");
@@ -190,7 +190,7 @@ TEST_F(Expressions, StringConcat) {
 TEST_F(Expressions, Negation) {
   std::string source = R"(
     let x = 0 - 5;
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "-5\n");
@@ -199,7 +199,7 @@ TEST_F(Expressions, Negation) {
 TEST_F(Expressions, DoubleNegation) {
   std::string source = R"(
     let x = 0 - 0 - 5;
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "-5\n");
@@ -208,9 +208,9 @@ TEST_F(Expressions, DoubleNegation) {
 TEST_F(Expressions, BangInCondition) {
   std::string source = R"(
     if (true == false) {
-      print "yes";
+      print("yes");
     } else {
-      print "no";
+      print("no");
     }
   )";
   EXPECT_NO_THROW(run(source));
@@ -219,7 +219,7 @@ TEST_F(Expressions, BangInCondition) {
 
 TEST_F(Expressions, NotEqualComparison) {
   std::string source = R"(
-    print true != false;
+    print(true != false);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -228,9 +228,9 @@ TEST_F(Expressions, NotEqualComparison) {
 TEST_F(Expressions, FalsyNil) {
   std::string source = R"(
     if (nil) {
-      print "truthy";
+      print("truthy");
     } else {
-      print "falsy";
+      print("falsy");
     }
   )";
   EXPECT_NO_THROW(run(source));
@@ -240,9 +240,9 @@ TEST_F(Expressions, FalsyNil) {
 TEST_F(Expressions, TruthyTrue) {
   std::string source = R"(
     if (true) {
-      print "truthy";
+      print("truthy");
     } else {
-      print "falsy";
+      print("falsy");
     }
   )";
   EXPECT_NO_THROW(run(source));
@@ -253,7 +253,7 @@ TEST_F(Expressions, TruthyTrue) {
 
 TEST_F(Expressions, TernaryTrue) {
   std::string source = R"(
-    print true ? "yes" : "no";
+    print(true ? "yes" : "no");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "yes\n");
@@ -261,7 +261,7 @@ TEST_F(Expressions, TernaryTrue) {
 
 TEST_F(Expressions, TernaryFalse) {
   std::string source = R"(
-    print false ? "yes" : "no";
+    print(false ? "yes" : "no");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "no\n");
@@ -269,7 +269,7 @@ TEST_F(Expressions, TernaryFalse) {
 
 TEST_F(Expressions, NestedTernary) {
   std::string source = R"(
-    print true ? (false ? 1 : 2) : 3;
+    print(true ? (false ? 1 : 2) : 3);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "2\n");
@@ -277,7 +277,7 @@ TEST_F(Expressions, NestedTernary) {
 
 TEST_F(Expressions, TernaryWithExpression) {
   std::string source = R"(
-    print 5 > 3 ? "big" : "small";
+    print(5 > 3 ? "big" : "small");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "big\n");
@@ -287,7 +287,7 @@ TEST_F(Expressions, TernaryWithExpression) {
 
 TEST_F(Expressions, AndTrueTrue) {
   std::string source = R"(
-    print true and true;
+    print(true and true);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -295,7 +295,7 @@ TEST_F(Expressions, AndTrueTrue) {
 
 TEST_F(Expressions, AndTrueFalse) {
   std::string source = R"(
-    print true and false;
+    print(true and false);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "false\n");
@@ -305,7 +305,7 @@ TEST_F(Expressions, AndShortCircuit) {
   std::string source = R"(
     let x = 0;
     false and (x = 1);
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "0\n");
@@ -313,7 +313,7 @@ TEST_F(Expressions, AndShortCircuit) {
 
 TEST_F(Expressions, OrFalseTrue) {
   std::string source = R"(
-    print false or true;
+    print(false or true);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -321,7 +321,7 @@ TEST_F(Expressions, OrFalseTrue) {
 
 TEST_F(Expressions, OrTrueFalse) {
   std::string source = R"(
-    print true or false;
+    print(true or false);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -331,7 +331,7 @@ TEST_F(Expressions, OrShortCircuit) {
   std::string source = R"(
     let x = 0;
     true or (x = 1);
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "0\n");
@@ -339,7 +339,7 @@ TEST_F(Expressions, OrShortCircuit) {
 
 TEST_F(Expressions, LogicalReturnsValue) {
   std::string source = R"(
-    print nil or "default";
+    print(nil or "default");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "default\n");
@@ -349,7 +349,7 @@ TEST_F(Expressions, LogicalReturnsValue) {
 
 TEST_F(Expressions, SubtractStringsError) {
   std::string source = R"(
-    print "a" - "b";
+    print("a" - "b");
   )";
   EXPECT_THROW(run(source), Error);
 }
@@ -357,17 +357,17 @@ TEST_F(Expressions, SubtractStringsError) {
 TEST_F(Expressions, NegateStringError) {
   std::string source = R"(
     let s = "not a number";
-    print -s;
+    print(-s);
   )";
   EXPECT_THROW(run(source), Error);
 }
 
 TEST_F(Expressions, UnaryMinus) {
   std::string source = R"(
-    print -5;
-    print --5;
-    print ---5;
-    print -(5 + 5);
+    print(-5);
+    print(--5);
+    print(---5);
+    print(-(5 + 5));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "-5\n5\n-5\n-10\n");
@@ -375,11 +375,11 @@ TEST_F(Expressions, UnaryMinus) {
 
 TEST_F(Expressions, UnaryBang) {
   std::string source = R"(
-    print !true;
-    print !false;
-    print !!true;
-    print !!!true;
-    print !(5 == 5);
+    print(!true);
+    print(!false);
+    print(!!true);
+    print(!!!true);
+    print(!(5 == 5));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "false\ntrue\ntrue\nfalse\nfalse\n");
@@ -394,13 +394,13 @@ TEST_F(Expressions, LogicalShortCircuitSideEffects) {
     }
 
     false and increment();
-    print x;
+    print(x);
     true or increment();
-    print x;
+    print(x);
     true and increment();
-    print x;
+    print(x);
     false or increment();
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "0\n0\n1\n2\n");
@@ -408,9 +408,9 @@ TEST_F(Expressions, LogicalShortCircuitSideEffects) {
 
 TEST_F(Expressions, TernaryRightAssociativity) {
   std::string source = R"(
-    print true ? "a" : false ? "b" : "c";
-    print false ? "a" : true ? "b" : "c";
-    print false ? "a" : false ? "b" : "c";
+    print(true ? "a" : false ? "b" : "c");
+    print(false ? "a" : true ? "b" : "c");
+    print(false ? "a" : false ? "b" : "c");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "a\nb\nc\n");

@@ -22,7 +22,7 @@ struct NativeFunctions : public fixtures::Execution {};
 TEST_F(NativeFunctions, ClockReturnsNumber) {
   std::string source = R"(
     let t = clock();
-    print t >= 0;
+    print(t >= 0);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -36,7 +36,7 @@ TEST_F(NativeFunctions, ClockCanBeUsedInExpressions) {
       i = i + 1;
     }
     let end = clock();
-    print end >= start;
+    print(end >= start);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -45,7 +45,7 @@ TEST_F(NativeFunctions, ClockCanBeUsedInExpressions) {
 TEST_F(NativeFunctions, ClockCallable) {
   std::string source = R"(
     let f = clock;
-    print f() >= 0;
+    print(f() >= 0);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");

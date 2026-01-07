@@ -32,7 +32,7 @@ TEST_F(Parent, BasicInheritance) {
             }
         }
         let b = B();
-        print b.method();
+        print(b.method());
     )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "BA\n");
@@ -52,8 +52,8 @@ TEST_F(Parent, InConstructor) {
             }
         }
         let b = B("a", "b");
-        print b.a;
-        print b.b;
+        print(b.a);
+        print(b.b);
     )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "a\nb\n");
@@ -63,7 +63,7 @@ TEST_F(Parent, WithoutSuperstruct) {
   std::string source = R"(
         struct A {
             method() {
-                print parent.method();
+                print(parent.method());
             }
         }
     )";
@@ -72,7 +72,7 @@ TEST_F(Parent, WithoutSuperstruct) {
 
 TEST_F(Parent, OutsideStruct) {
   std::string source = R"(
-        print parent.method();
+        print(parent.method());
     )";
   EXPECT_THROW(run(source), Error);
 }

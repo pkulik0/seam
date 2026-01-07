@@ -28,8 +28,8 @@ TEST_F(Constructors, BasicInit) {
       }
     }
     let p = Point(3, 4);
-    print p.x;
-    print p.y;
+    print(p.x);
+    print(p.y);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "3\n4\n");
@@ -43,7 +43,7 @@ TEST_F(Constructors, InitNoParams) {
       }
     }
     let c = Counter();
-    print c.count;
+    print(c.count);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "0\n");
@@ -63,7 +63,7 @@ TEST_F(Constructors, InitMultipleParams) {
       }
     }
     let r = Rectangle(0, 0, 10, 5);
-    print r.area();
+    print(r.area());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "50\n");
@@ -77,7 +77,7 @@ TEST_F(Constructors, InitReturnsInstance) {
       }
     }
     let b = Box(42);
-    print b;
+    print(b);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Box instance\n");
@@ -93,7 +93,7 @@ TEST_F(Constructors, InitWithMultipleStatements) {
       }
     }
     let p = Point(3, 4);
-    print p.sum;
+    print(p.sum);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "7\n");
@@ -111,7 +111,7 @@ TEST_F(Constructors, InitCallsMethod) {
       }
     }
     let c = Circle(2);
-    print c.area;
+    print(c.area);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "12.56\n");
@@ -125,7 +125,7 @@ TEST_F(Constructors, InitWithStringParam) {
       }
     }
     let g = Greeter("World");
-    print g.greeting;
+    print(g.greeting);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Hello, World\n");
@@ -141,9 +141,9 @@ TEST_F(Constructors, InitSetsMultipleProperties) {
       }
     }
     let p = Person("John", "Doe");
-    print p.firstName;
-    print p.lastName;
-    print p.fullName;
+    print(p.firstName);
+    print(p.lastName);
+    print(p.fullName);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "John\nDoe\nJohn Doe\n");
@@ -179,7 +179,7 @@ TEST_F(Constructors, InitTooManyArgs) {
 
 TEST_F(Constructors, ThisOutsideStruct) {
   std::string source = R"(
-    print self;
+    print(self);
   )";
   EXPECT_THROW(run(source), Error);
 }
@@ -187,7 +187,7 @@ TEST_F(Constructors, ThisOutsideStruct) {
 TEST_F(Constructors, ThisInFn) {
   std::string source = R"(
     fn test() {
-      print self;
+      print(self);
     }
     test();
   )";
@@ -203,7 +203,7 @@ TEST_F(Constructors, InitExplicitReturnThis) {
       }
     }
     let b = Box(42);
-    print b.value;
+    print(b.value);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "42\n");
@@ -219,8 +219,8 @@ TEST_F(Constructors, InitEarlyReturnReturnsThis) {
       }
     }
 
-    print Box("early").value;
-    print Box("other").value;
+    print(Box("early").value);
+    print(Box("other").value);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "early\nlate\n");

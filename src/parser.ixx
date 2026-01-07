@@ -91,7 +91,6 @@ private:
       case Type::LET:
       case Type::FOR:
       case Type::IF:
-      case Type::PRINT:
       case Type::RETURN:
       case Type::WHILE:
         return;
@@ -217,9 +216,6 @@ private:
     if (match(Type::IF)) {
       return parse_if_statement();
     }
-    if (match(Type::PRINT)) {
-      return parse_print_statement();
-    }
     if (match(Type::RETURN)) {
       return parse_return_statement();
     }
@@ -294,12 +290,6 @@ private:
 
     return IfStatement{make_expression(std::move(condition)),
                        std::move(then_branch), std::move(else_branch)};
-  }
-
-  PrintStatement parse_print_statement() {
-    auto expr = parse_expression();
-    consume(Type::SEMICOLON, "Expected ';' after print statement.");
-    return PrintStatement{make_expression(std::move(expr))};
   }
 
   BlockStatement parse_block() {

@@ -24,7 +24,7 @@ struct Functions : public fixtures::Execution {};
 TEST_F(Functions, NoParams) {
   std::string source = R"(
     fn greet() {
-      print "hi";
+      print("hi");
     }
     greet();
   )";
@@ -35,7 +35,7 @@ TEST_F(Functions, NoParams) {
 TEST_F(Functions, WithParams) {
   std::string source = R"(
     fn add(a, b) {
-      print a + b;
+      print(a + b);
     }
     add(2, 3);
   )";
@@ -48,7 +48,7 @@ TEST_F(Functions, ReturnValue) {
     fn double(x) {
       return x * 2;
     }
-    print double(5);
+    print(double(5));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "10\n");
@@ -61,7 +61,7 @@ TEST_F(Functions, ReturnFromBlock) {
         return "from block";
       }
     }
-    print test();
+    print(test());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "from block\n");
@@ -73,7 +73,7 @@ TEST_F(Functions, EarlyReturnWithLiteral) {
       if (true) return "early";
       return "late";
     }
-    print earlyExit();
+    print(earlyExit());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "early\n");
@@ -84,7 +84,7 @@ TEST_F(Functions, MultipleParams) {
     fn sum(a, b, c, d, e) {
       return a + b + c + d + e;
     }
-    print sum(1, 2, 3, 4, 5);
+    print(sum(1, 2, 3, 4, 5));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "15\n");
@@ -102,8 +102,8 @@ TEST_F(Functions, MutualRecursion) {
       return isEven(n - 1);
     }
 
-    print isEven(4);
-    print isOdd(4);
+    print(isEven(4));
+    print(isOdd(4));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\nfalse\n");
@@ -115,7 +115,7 @@ TEST_F(Functions, DeepRecursion) {
       if (n <= 1) return n;
       return fib(n - 1) + fib(n - 2);
     }
-    print fib(10);
+    print(fib(10));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "55\n");
@@ -126,9 +126,9 @@ TEST_F(Functions, LocalShadowingInBlock) {
     fn test(x) {
       {
         let x = "shadow";
-        print x;
+        print(x);
       }
-      print x;
+      print(x);
     }
     test("original");
   )";
@@ -139,7 +139,7 @@ TEST_F(Functions, LocalShadowingInBlock) {
 TEST_F(Functions, DuplicateParamError) {
   std::string source = R"(
     fn test(x, x) {
-      print x;
+      print(x);
     }
   )";
   EXPECT_THROW(run(source), Error);
@@ -158,7 +158,7 @@ TEST_F(Functions, RecursiveClosureShadowing) {
       };
     }
     let sum = makeCounter(5);
-    print sum();
+    print(sum());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "15\n");
@@ -168,10 +168,10 @@ TEST_F(Functions, ShadowingGlobal) {
   std::string source = R"(
     let x = "global";
     fn test(x) {
-      print x;
+      print(x);
     }
     test("param");
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "param\nglobal\n");
@@ -181,7 +181,7 @@ TEST_F(Functions, AccessGlobal) {
   std::string source = R"(
     let x = "global";
     fn test() {
-      print x;
+      print(x);
     }
     test();
   )";
@@ -197,7 +197,7 @@ TEST_F(Functions, ModifyGlobal) {
     }
     increment();
     increment();
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "3\n");
@@ -253,7 +253,7 @@ TEST_F(Functions, FunctionAsValue) {
       return "hello";
     }
     let f = greet;
-    print f();
+    print(f());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "hello\n");
@@ -267,7 +267,7 @@ TEST_F(Functions, PassFunctionAsArgument) {
     fn double(n) {
       return n * 2;
     }
-    print apply(double, 5);
+    print(apply(double, 5));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "10\n");

@@ -24,7 +24,7 @@ TEST_F(Closures, BasicClosure) {
     fn outer() {
       let x = "captured";
       fn inner() {
-        print x;
+        print(x);
       }
       inner();
     }
@@ -39,7 +39,7 @@ TEST_F(Closures, CloseOverMutable) {
     fn outer() {
       let x = 1;
       fn inner() {
-        print x;
+        print(x);
       }
       inner();
       x = 2;
@@ -62,9 +62,9 @@ TEST_F(Closures, MultipleClosuresShareState) {
       return increment;
     }
     let counter = makeCounter();
-    print counter();
-    print counter();
-    print counter();
+    print(counter());
+    print(counter());
+    print(counter());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "1\n2\n3\n");
@@ -77,8 +77,8 @@ TEST_F(Closures, NestedClosures) {
       fn middle() {
         let b = "b";
         fn inner() {
-          print a;
-          print b;
+          print(a);
+          print(b);
         }
         inner();
       }
@@ -99,8 +99,8 @@ TEST_F(Closures, ClosureReturnedFromFunction) {
       return adder;
     }
     let add5 = makeAdder(5);
-    print add5(3);
-    print add5(10);
+    print(add5(3));
+    print(add5(10));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "8\n15\n");
@@ -118,10 +118,10 @@ TEST_F(Closures, CounterExample) {
     }
     let c1 = createCounter();
     let c2 = createCounter();
-    print c1();
-    print c1();
-    print c2();
-    print c1();
+    print(c1());
+    print(c1());
+    print(c2());
+    print(c1());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "1\n2\n1\n3\n");
@@ -138,7 +138,7 @@ TEST_F(Closures, ClosureModifiesEnclosing) {
         return x;
       }
       setX(42);
-      print getX();
+      print(getX());
     }
     outer();
   )";
@@ -152,7 +152,7 @@ TEST_F(Closures, ClosureWithParameters) {
       return fn(y) { return x + y; };
     }
     let add5 = makeAdder(5);
-    print add5(10);
+    print(add5(10));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "15\n");
@@ -164,8 +164,8 @@ TEST_F(Closures, CaptureLoopVariable) {
     let f2 = nil;
     for (let i = 0; i < 2; i = i + 1) {
       let j = i;
-      if (i == 0) f1 = fn() { print j; };
-      else f2 = fn() { print j; };
+      if (i == 0) f1 = fn() { print(j); };
+      else f2 = fn() { print(j); };
     }
     f1();
     f2();
@@ -179,8 +179,8 @@ TEST_F(Closures, CaptureForInitializer) {
     let f1 = nil;
     let f2 = nil;
     for (let i = 0; i < 2; i = i + 1) {
-      if (i == 0) f1 = fn() { print i; };
-      else f2 = fn() { print i; };
+      if (i == 0) f1 = fn() { print(i); };
+      else f2 = fn() { print(i); };
     }
     f1();
     f2();

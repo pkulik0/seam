@@ -17,104 +17,104 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-struct PrintStatement : public fixtures::Execution {};
+struct Print : public fixtures::Execution {};
 
-TEST_F(PrintStatement, PrintNumber) {
+TEST_F(Print, PrintNumber) {
   std::string source = R"(
-    print 42;
+    print(42);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "42\n");
 }
 
-TEST_F(PrintStatement, PrintFloat) {
+TEST_F(Print, PrintFloat) {
   std::string source = R"(
-    print 3.14;
+    print(3.14);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "3.14\n");
 }
 
-TEST_F(PrintStatement, PrintString) {
+TEST_F(Print, PrintString) {
   std::string source = R"(
-    print "hello";
+    print("hello");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "hello\n");
 }
 
-TEST_F(PrintStatement, PrintTrue) {
+TEST_F(Print, PrintTrue) {
   std::string source = R"(
-    print true;
+    print(true);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
 }
 
-TEST_F(PrintStatement, PrintFalse) {
+TEST_F(Print, PrintFalse) {
   std::string source = R"(
-    print false;
+    print(false);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "false\n");
 }
 
-TEST_F(PrintStatement, PrintNil) {
+TEST_F(Print, PrintNil) {
   std::string source = R"(
-    print nil;
+    print(nil);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "nil\n");
 }
 
-TEST_F(PrintStatement, PrintExpression) {
+TEST_F(Print, PrintExpression) {
   std::string source = R"(
-    print 2 + 2;
+    print(2 + 2);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "4\n");
 }
 
-TEST_F(PrintStatement, PrintFunctionResult) {
+TEST_F(Print, PrintFunctionResult) {
   std::string source = R"(
     fn double(n) { return n * 2; }
-    print double(21);
+    print(double(21));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "42\n");
 }
 
-TEST_F(PrintStatement, MultipleStatements) {
+TEST_F(Print, MultipleStatements) {
   std::string source = R"(
-    print "first";
-    print "second";
-    print "third";
+    print("first");
+    print("second");
+    print("third");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "first\nsecond\nthird\n");
 }
 
-TEST_F(PrintStatement, PrintEmptyString) {
+TEST_F(Print, PrintEmptyString) {
   std::string source = R"(
-    print "";
+    print("");
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "\n");
 }
 
-TEST_F(PrintStatement, PrintStruct) {
+TEST_F(Print, PrintStruct) {
   std::string source = R"(
     struct Foo {}
-    print Foo;
+    print(Foo);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Foo\n");
 }
 
-TEST_F(PrintStatement, PrintInstance) {
+TEST_F(Print, PrintInstance) {
   std::string source = R"(
     struct Bar {}
-    print Bar();
+    print(Bar());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "Bar instance\n");

@@ -50,7 +50,7 @@ TEST_F(EdgeCases, SingleNestedScope) {
     let a = 1;
     {
       let b = 2;
-      print a + b;
+      print(a + b);
     }
   )";
   EXPECT_NO_THROW(run(source));
@@ -71,7 +71,7 @@ TEST_F(EdgeCases, LongChainedCalls) {
         return self.value;
       }
     }
-    print Builder().add(1).add(2).add(3).add(4).get();
+    print(Builder().add(1).add(2).add(3).add(4).get());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "10\n");
@@ -85,7 +85,7 @@ TEST_F(EdgeCases, FunctionAsProperty) {
     }
     let c = Container();
     c.func = greet;
-    print c.func();
+    print(c.func());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "hello\n");
@@ -95,7 +95,7 @@ TEST_F(EdgeCases, SelfReferenceInUpdate) {
   std::string source = R"(
     let x = 5;
     x = x + x;
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "10\n");
@@ -106,7 +106,7 @@ TEST_F(EdgeCases, ZeroArityFunction) {
     fn noArgs() {
       return 42;
     }
-    print noArgs();
+    print(noArgs());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "42\n");
@@ -117,7 +117,7 @@ TEST_F(EdgeCases, ComplexTernaryNesting) {
     let a = true;
     let b = false;
     let c = true;
-    print a ? (b ? 1 : (c ? 2 : 3)) : 4;
+    print(a ? (b ? 1 : (c ? 2 : 3)) : 4);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "2\n");
@@ -125,7 +125,7 @@ TEST_F(EdgeCases, ComplexTernaryNesting) {
 
 TEST_F(EdgeCases, MixedArithmeticAndComparison) {
   std::string source = R"(
-    print 1 + 2 * 3 > 5 and 10 / 2 == 5;
+    print(1 + 2 * 3 > 5 and 10 / 2 == 5);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -135,7 +135,7 @@ TEST_F(EdgeCases, NestedFunctionCalls) {
   std::string source = R"(
     fn add(a, b) { return a + b; }
     fn mul(a, b) { return a * b; }
-    print add(mul(2, 3), mul(4, 5));
+    print(add(mul(2, 3), mul(4, 5)));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "26\n");
@@ -152,7 +152,7 @@ TEST_F(EdgeCases, StructWithManyMethods) {
       get() { return self.result; }
     }
     let c = Calculator();
-    print c.add(10).mul(2).sub(5).div(3).get();
+    print(c.add(10).mul(2).sub(5).div(3).get());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "5\n");
@@ -162,10 +162,10 @@ TEST_F(EdgeCases, InheritedMethodCallsOverriddenMethod) {
   std::string source = R"(
     struct Base {
       method() { self.printMe(); }
-      printMe() { print "base"; }
+      printMe() { print("base"); }
     }
     struct Derived + Base {
-      printMe() { print "derived"; }
+      printMe() { print("derived"); }
     }
     Derived().method();
   )";
@@ -175,8 +175,8 @@ TEST_F(EdgeCases, InheritedMethodCallsOverriddenMethod) {
 
 TEST_F(EdgeCases, DeeplyNestedExpressions) {
   std::string source = R"(
-    print 1 + (2 + (3 + (4 + (5 + (6 + 7)))));
-    print (true ? (false ? "a" : (true ? "b" : "c")) : "d");
+    print(1 + (2 + (3 + (4 + (5 + (6 + 7))))));
+    print((true ? (false ? "a" : (true ? "b" : "c")) : "d"));
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "28\nb\n");
@@ -187,9 +187,9 @@ TEST_F(EdgeCases, ReassignFunctionVariable) {
     fn first() { return 1; }
     fn second() { return 2; }
     let f = first;
-    print f();
+    print(f());
     f = second;
-    print f();
+    print(f());
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "1\n2\n");

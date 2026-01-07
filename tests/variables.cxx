@@ -22,7 +22,7 @@ struct Variables : public fixtures::Execution {};
 TEST_F(Variables, DeclarationAndAccess) {
   std::string source = R"(
     let x = 10;
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "10\n");
@@ -31,7 +31,7 @@ TEST_F(Variables, DeclarationAndAccess) {
 TEST_F(Variables, InitializerExpression) {
   std::string source = R"(
     let x = 5 + 5;
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "10\n");
@@ -41,7 +41,7 @@ TEST_F(Variables, Reassignment) {
   std::string source = R"(
     let x = 1;
     x = 2;
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "2\n");
@@ -50,7 +50,7 @@ TEST_F(Variables, Reassignment) {
 TEST_F(Variables, StringVariable) {
   std::string source = R"(
     let s = "hello";
-    print s;
+    print(s);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "hello\n");
@@ -59,7 +59,7 @@ TEST_F(Variables, StringVariable) {
 TEST_F(Variables, BooleanVariable) {
   std::string source = R"(
     let b = true;
-    print b;
+    print(b);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "true\n");
@@ -68,7 +68,7 @@ TEST_F(Variables, BooleanVariable) {
 TEST_F(Variables, NilVariable) {
   std::string source = R"(
     let n = nil;
-    print n;
+    print(n);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "nil\n");
@@ -79,9 +79,9 @@ TEST_F(Variables, LocalScopeShadowing) {
     let a = "outer";
     {
       let a = "inner";
-      print a;
+      print(a);
     }
-    print a;
+    print(a);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "inner\nouter\n");
@@ -94,11 +94,11 @@ TEST_F(Variables, NestedScopes) {
       let a = "outer";
       {
         let a = "inner";
-        print a;
+        print(a);
       }
-      print a;
+      print(a);
     }
-    print a;
+    print(a);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "inner\nouter\nglobal\n");
@@ -113,13 +113,13 @@ TEST_F(Variables, DeeplyNestedShadowing) {
         let x = 3;
         {
           let x = 4;
-          print x;
+          print(x);
         }
-        print x;
+        print(x);
       }
-      print x;
+      print(x);
     }
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "4\n3\n2\n1\n");
@@ -130,13 +130,13 @@ TEST_F(Variables, ShadowingInDifferentBranches) {
     let x = "global";
     if (true) {
       let x = "then";
-      print x;
+      print(x);
     }
     if (true) {
       let x = "else";
-      print x;
+      print(x);
     }
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "then\nelse\nglobal\n");
@@ -146,7 +146,7 @@ TEST_F(Variables, BlockAccessesOuter) {
   std::string source = R"(
     let x = 10;
     {
-      print x;
+      print(x);
     }
   )";
   EXPECT_NO_THROW(run(source));
@@ -159,7 +159,7 @@ TEST_F(Variables, BlockModifiesOuter) {
     {
       x = 20;
     }
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "20\n");
@@ -167,7 +167,7 @@ TEST_F(Variables, BlockModifiesOuter) {
 
 TEST_F(Variables, UndefinedVariableError) {
   std::string source = R"(
-    print x;
+    print(x);
   )";
   EXPECT_THROW(run(source), Error);
 }
@@ -182,7 +182,7 @@ TEST_F(Variables, AssignUndefinedError) {
 TEST_F(Variables, NilInitializedVariable) {
   std::string source = R"(
     let x = nil;
-    print x;
+    print(x);
   )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "nil\n");

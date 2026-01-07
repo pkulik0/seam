@@ -26,7 +26,7 @@ TEST_F(StaticMethods, CanCallStaticMethod) {
                 return a + b;
             }
         }
-        print Math.add(5, 10);
+        print(Math.add(5, 10));
     )";
   EXPECT_NO_THROW(run(source));
   EXPECT_EQ(last_output(), "15\n");
@@ -36,7 +36,7 @@ TEST_F(StaticMethods, StaticMethodCannotUseThis) {
   std::string source = R"(
         struct Math {
             static fail() {
-                print self;
+                print(self);
             }
         }
     )";
@@ -51,7 +51,7 @@ TEST_F(StaticMethods, CannotCallStaticMethodOnInstance) {
             }
         }
         let m = Math();
-        print m.add(1, 2);
+        print(m.add(1, 2));
     )";
   EXPECT_THROW(run(source), Error);
 }
@@ -63,7 +63,7 @@ TEST_F(StaticMethods, CannotCallInstanceMethodOnStruct) {
                 return a + b;
             }
         }
-        print Math.add(1, 2);
+        print(Math.add(1, 2));
     )";
   EXPECT_THROW(run(source), Error);
 }
