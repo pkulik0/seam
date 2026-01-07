@@ -17,9 +17,9 @@ import seam.tests.fixtures;
 using namespace seam;
 using namespace seam::tests;
 
-class SuperTests : public fixtures::Execution {};
+class Super : public fixtures::Execution {};
 
-TEST_F(SuperTests, BasicInheritance) {
+TEST_F(Super, BasicInheritance) {
   std::string source = R"(
         class A {
             method() {
@@ -35,9 +35,10 @@ TEST_F(SuperTests, BasicInheritance) {
         print b.method();
     )";
   EXPECT_NO_THROW(run(source));
+  EXPECT_EQ(last_output(), "BA\n");
 }
 
-TEST_F(SuperTests, SuperInConstructor) {
+TEST_F(Super, InConstructor) {
   std::string source = R"(
         class A {
             init(a) {
@@ -55,9 +56,10 @@ TEST_F(SuperTests, SuperInConstructor) {
         print b.b;
     )";
   EXPECT_NO_THROW(run(source));
+  EXPECT_EQ(last_output(), "a\nb\n");
 }
 
-TEST_F(SuperTests, SuperWithoutSuperclass) {
+TEST_F(Super, WithoutSuperclass) {
   std::string source = R"(
         class A {
             method() {
@@ -68,14 +70,14 @@ TEST_F(SuperTests, SuperWithoutSuperclass) {
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(SuperTests, SuperOutsideClass) {
+TEST_F(Super, OutsideClass) {
   std::string source = R"(
         print super.method();
     )";
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(SuperTests, SuperMethodDoesNotExist) {
+TEST_F(Super, MethodDoesNotExist) {
   std::string source = R"(
         class A {}
         class B + A {
@@ -89,7 +91,7 @@ TEST_F(SuperTests, SuperMethodDoesNotExist) {
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(SuperTests, InheritFromNonClass) {
+TEST_F(Super, InheritFromNonClass) {
   std::string source = R"(
         var NotAClass = "I am a string";
         class B + NotAClass {}
@@ -97,7 +99,7 @@ TEST_F(SuperTests, InheritFromNonClass) {
   EXPECT_THROW(run(source), Error);
 }
 
-TEST_F(SuperTests, InheritFromSelf) {
+TEST_F(Super, InheritFromSelf) {
   std::string source = R"(
         class A + A {}
     )";

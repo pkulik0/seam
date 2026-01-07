@@ -1,6 +1,8 @@
 module;
 
 #include <gtest/gtest.h>
+#include <sstream>
+#include <string>
 
 export module seam.tests.fixtures;
 
@@ -16,10 +18,15 @@ export namespace seam::tests::fixtures {
 
 class Execution : public ::testing::Test {
 protected:
-  interpreter::Interpreter interpreter;
+  std::stringstream m_out;
+  interpreter::Interpreter interpreter{m_out};
   resolver::Resolver resolver{interpreter};
 
+  std::string last_output() const { return m_out.str(); }
+
   void run(const std::string &source) {
+    m_out.str("");
+    m_out.clear();
     scanner::Scanner scanner{source};
     auto tokens = scanner.scan_tokens();
 

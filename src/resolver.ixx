@@ -132,6 +132,9 @@ private:
               }
             },
             [this](const FunctionExpression &e) -> void {
+              FunctionType enclosing_function = m_current_function;
+              m_current_function = FunctionType::FUNCTION;
+
               begin_scope();
               for (const auto &param : e.parameters) {
                 declare(param);
@@ -139,6 +142,8 @@ private:
               }
               resolve_block(*e.body);
               end_scope();
+
+              m_current_function = enclosing_function;
             },
             [this](const Get &e) -> void { resolve(*e.object); },
             [this](const Set &e) -> void {
@@ -211,6 +216,7 @@ private:
               resolve(*w.body);
             },
             [this](const ForStatement &f) -> void {
+              begin_scope();
               if (f.initializer) {
                 resolve(*f.initializer);
               }
@@ -219,6 +225,7 @@ private:
                 resolve(*f.increment);
               }
               resolve(*f.body);
+              end_scope();
             },
             [this](const ReturnStatement &r) -> void {
               if (m_current_function == FunctionType::NONE) {

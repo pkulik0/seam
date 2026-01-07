@@ -425,12 +425,12 @@ private:
   }
 
   Expression parse_factor() {
-    auto expr = parse_call();
+    auto expr = parse_unary();
 
     while (match(Type::SLASH, Type::STAR)) {
       const auto op = previous();
       expr = Binary{make_expression(std::move(expr)), op,
-                    make_expression(parse_call())};
+                    make_expression(parse_unary())};
     }
 
     return expr;

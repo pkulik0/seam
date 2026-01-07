@@ -29,6 +29,7 @@ TEST_F(StaticMethods, CanCallStaticMethod) {
         print Math.add(5, 10);
     )";
   EXPECT_NO_THROW(run(source));
+  EXPECT_EQ(last_output(), "15\n");
 }
 
 TEST_F(StaticMethods, StaticMethodCannotUseThis) {

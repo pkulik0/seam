@@ -4,7 +4,9 @@ module;
 #include <chrono>
 #include <format>
 #include <functional>
+#include <iostream>
 #include <memory>
+#include <ostream>
 #include <print>
 #include <string>
 #include <unordered_map>
@@ -28,6 +30,7 @@ class Interpreter {
   std::shared_ptr<Environment> m_globals;
   std::shared_ptr<Environment> m_env;
   std::unordered_map<const Expression *, int> m_locals;
+  std::ostream &m_out;
 
   class ReturnValue : public std::exception {
   public:
@@ -322,6 +325,13 @@ class Interpreter {
       auto instance = std::any_cast<std::shared_ptr<SeamInstance>>(value);
       return std::format("{} instance", instance->name());
     }
+    if (value.type() == typeid(std::shared_ptr<SeamCallable>)) {
+      auto callable = std::any_cast<std::shared_ptr<SeamCallable>>(value);
+      if (auto klass = std::dynamic_pointer_cast<SeamClass>(callable)) {
+        return std::string(klass->name());
+      }
+      return "function";
+    }
     return std::string(value.type().name());
   }
 
@@ -545,12 +555,14 @@ class Interpreter {
     std::visit(
         overload{
             [this](const PrintStatement &s) -> void {
-              std::println("{}", stringify(evaluate(*s.expression)));
+              std::println(m_out, "{}", stringify(evaluate(*s.expression)));
             },
             [this](const Expression &e) -> void { evaluate(e); },
-            [this](const BlockStatement &b) -> void { execute_block(b); },
-            [this](const IfStatement &i) -> void {
+            [this](const BlockStatement &b) -> void {
               ScopeGuard scope(*this);
+              execute_block(b);
+            },
+            [this](const IfStatement &i) -> void {
               if (is_truthy(evaluate(*i.condition))) {
                 execute_statement(*i.then_branch);
               } else if (i.else_branch) {
@@ -558,7 +570,6 @@ class Interpreter {
               }
             },
             [this](const WhileStatement &w) -> void {
-              ScopeGuard scope(*this);
               while (is_truthy(evaluate(*w.condition))) {
                 execute_statement(*w.body);
               }
@@ -664,7 +675,9 @@ class Interpreter {
 public:
   void resolve(const Expression *expr, int depth) { m_locals[expr] = depth; }
 
-  Interpreter() : m_globals(std::make_shared<Environment>()), m_env(m_globals) {
+  Interpreter(std::ostream &out = std::cout)
+      : m_globals(std::make_shared<Environment>()), m_env(m_globals),
+        m_out(out) {
     std::shared_ptr<SeamCallable> clock = std::make_shared<SeamNativeFunction>(
         [](Interpreter &, std::vector<std::any> &&) -> std::any {
           using namespace std::chrono;
