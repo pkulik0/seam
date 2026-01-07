@@ -2,12 +2,15 @@ module;
 
 #include <any>
 #include <format>
+#include <iostream>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <variant>
+#include <termcolor/termcolor.hpp>
 
 export module seam.ast;
 
@@ -180,174 +183,421 @@ struct Program {
 
 class AstPrinter {
 public:
-  std::string print(const Program &program) const {
-    std::string result;
-    for (const auto &declaration : program.declarations) {
-      result += print_declaration(declaration) + "\n";
+  void print(std::ostream &os, const Program &program) const {
+    os << termcolor::colorize;
+    os << termcolor::bold << termcolor::bright_cyan << "Program"
+       << termcolor::reset << "\n";
+
+    for (size_t i = 0; i < program.declarations.size(); ++i) {
+      bool is_last = (i == program.declarations.size() - 1);
+      print_declaration(os, program.declarations[i], "", is_last);
     }
-    return result;
+    os << termcolor::reset << "\n";
+  }
+
+  std::string print(const Program &program) const {
+    std::ostringstream oss;
+    print(oss, program);
+    return oss.str();
   }
 
 private:
-  template <typename... Exprs>
-  std::string parenthesize(std::string_view name, const Exprs &...exprs) const {
-    std::string result = std::format("({}", name);
-    ((result += std::format(" {}", print_expression(exprs))), ...);
-    return result + ")";
+  // Tree drawing characters
+  static constexpr const char* BRANCH = "\xe2\x94\x9c\xe2\x94\x80\xe2\x94\x80 ";  // "├── "
+  static constexpr const char* LAST   = "\xe2\x94\x94\xe2\x94\x80\xe2\x94\x80 ";  // "└── "
+  static constexpr const char* PIPE   = "\xe2\x94\x82   ";                        // "│   "
+  static constexpr const char* SPACE  = "    ";                                   // "    "
+
+  void print_indent(std::ostream &os, const std::string &prefix, bool is_last) const {
+    os << termcolor::bright_grey << prefix
+       << (is_last ? LAST : BRANCH) << termcolor::reset;
   }
 
-  std::string print_expression(const Expression &expr) const {
-    return std::visit(
+  std::string child_prefix(const std::string &prefix, bool is_last) const {
+    return prefix + (is_last ? SPACE : PIPE);
+  }
+
+  // Node type label (bold, colored)
+  void print_node(std::ostream &os, const std::string &type) const {
+    os << termcolor::bold << termcolor::yellow << type << termcolor::reset;
+  }
+
+  // Keyword styling
+  void print_keyword(std::ostream &os, std::string_view kw) const {
+    os << termcolor::bold << termcolor::magenta << kw << termcolor::reset;
+  }
+
+  // Operator styling
+  void print_operator(std::ostream &os, std::string_view op) const {
+    os << termcolor::bold << termcolor::cyan << op << termcolor::reset;
+  }
+
+  // Identifier styling
+  void print_identifier(std::ostream &os, std::string_view id) const {
+    os << termcolor::bright_white << id << termcolor::reset;
+  }
+
+  // Literal value styling
+  void print_literal_value(std::ostream &os, const std::any &value) const {
+    if (!value.has_value()) {
+      os << termcolor::bright_grey << "nil" << termcolor::reset;
+      return;
+    }
+    if (value.type() == typeid(double)) {
+      os << termcolor::bright_green << std::any_cast<double>(value) << termcolor::reset;
+    } else if (value.type() == typeid(bool)) {
+      os << termcolor::bright_blue
+         << (std::any_cast<bool>(value) ? "true" : "false")
+         << termcolor::reset;
+    } else if (value.type() == typeid(std::string_view)) {
+      os << termcolor::green << "\"" << std::any_cast<std::string_view>(value) << "\"" << termcolor::reset;
+    } else if (value.type() == typeid(std::string)) {
+      os << termcolor::green << "\"" << std::any_cast<std::string>(value) << "\"" << termcolor::reset;
+    } else {
+      os << termcolor::red << "<unknown>" << termcolor::reset;
+    }
+  }
+
+  void print_expression(std::ostream &os, const Expression &expr,
+                        const std::string &prefix, bool is_last) const {
+    std::visit(
         overload{
-            [this](const Binary &e) -> std::string {
-              return parenthesize(e.op.lexeme(), *e.left, *e.right);
+            [&](const Binary &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Binary");
+              os << " ";
+              print_operator(os, e.op.lexeme());
+              os << "\n";
+
+              std::string new_prefix = child_prefix(prefix, is_last);
+              print_expression(os, *e.left, new_prefix, false);
+              print_expression(os, *e.right, new_prefix, true);
             },
-            [this](const Grouping &e) -> std::string {
-              return parenthesize("group", *e.expr);
+            [&](const Grouping &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Group");
+              os << "\n";
+              print_expression(os, *e.expr, child_prefix(prefix, is_last), true);
             },
-            [](const Literal &e) -> std::string {
-              if (!e.value.has_value()) {
-                return "nil";
+            [&](const Literal &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Literal");
+              os << " ";
+              print_literal_value(os, e.value);
+              os << "\n";
+            },
+            [&](const Unary &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Unary");
+              os << " ";
+              print_operator(os, e.op.lexeme());
+              os << "\n";
+              print_expression(os, *e.right, child_prefix(prefix, is_last), true);
+            },
+            [&](const Ternary &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Ternary");
+              os << " ";
+              print_operator(os, "?:");
+              os << "\n";
+
+              std::string new_prefix = child_prefix(prefix, is_last);
+              print_indent(os, new_prefix, false);
+              os << termcolor::bright_grey << "condition:" << termcolor::reset << "\n";
+              print_expression(os, *e.condition, child_prefix(new_prefix, false), true);
+
+              print_indent(os, new_prefix, false);
+              os << termcolor::bright_grey << "then:" << termcolor::reset << "\n";
+              print_expression(os, *e.true_expr, child_prefix(new_prefix, false), true);
+
+              print_indent(os, new_prefix, true);
+              os << termcolor::bright_grey << "else:" << termcolor::reset << "\n";
+              print_expression(os, *e.false_expr, child_prefix(new_prefix, true), true);
+            },
+            [&](const LetExpr &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Var");
+              os << " ";
+              print_identifier(os, e.name.lexeme());
+              os << "\n";
+            },
+            [&](const Assignment &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Assign");
+              os << " ";
+              print_identifier(os, e.name.lexeme());
+              os << " ";
+              print_operator(os, "=");
+              os << "\n";
+              print_expression(os, *e.value, child_prefix(prefix, is_last), true);
+            },
+            [&](const Logical &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Logical");
+              os << " ";
+              print_operator(os, e.op.lexeme());
+              os << "\n";
+
+              std::string new_prefix = child_prefix(prefix, is_last);
+              print_expression(os, *e.left, new_prefix, false);
+              print_expression(os, *e.right, new_prefix, true);
+            },
+            [&](const Call &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Call");
+              os << "\n";
+
+              std::string new_prefix = child_prefix(prefix, is_last);
+              bool has_args = !e.arguments.empty();
+
+              print_indent(os, new_prefix, !has_args);
+              os << termcolor::bright_grey << "callee:" << termcolor::reset << "\n";
+              print_expression(os, *e.callee, child_prefix(new_prefix, !has_args), true);
+
+              if (has_args) {
+                print_indent(os, new_prefix, true);
+                os << termcolor::bright_grey << "args:" << termcolor::reset << "\n";
+                std::string args_prefix = child_prefix(new_prefix, true);
+                for (size_t i = 0; i < e.arguments.size(); ++i) {
+                  print_expression(os, *e.arguments[i], args_prefix,
+                                   i == e.arguments.size() - 1);
+                }
               }
-              if (e.value.type() == typeid(double)) {
-                return std::format("{}", std::any_cast<double>(e.value));
+            },
+            [&](const FnExpression &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Lambda");
+              os << " ";
+              print_operator(os, "(");
+              for (size_t i = 0; i < e.parameters.size(); ++i) {
+                if (i > 0) os << termcolor::bright_grey << ", " << termcolor::reset;
+                print_identifier(os, e.parameters[i].lexeme());
               }
-              if (e.value.type() == typeid(bool)) {
-                return std::any_cast<bool>(e.value) ? "true" : "false";
-              }
-              if (e.value.type() == typeid(std::string_view)) {
-                return std::string(std::any_cast<std::string_view>(e.value));
-              }
-              if (e.value.type() == typeid(std::string)) {
-                return std::any_cast<std::string>(e.value);
-              }
-              return "unknown";
+              print_operator(os, ")");
+              os << "\n";
+              print_block(os, *e.body, child_prefix(prefix, is_last), true);
             },
-            [this](const Unary &e) -> std::string {
-              return parenthesize(e.op.lexeme(), *e.right);
+            [&](const Get &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Get");
+              os << " ";
+              print_operator(os, ".");
+              print_identifier(os, e.name.lexeme());
+              os << "\n";
+              print_expression(os, *e.object, child_prefix(prefix, is_last), true);
             },
-            [this](const Ternary &e) -> std::string {
-              return parenthesize("?:", *e.condition, *e.true_expr,
-                                  *e.false_expr);
+            [&](const Set &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Set");
+              os << " ";
+              print_operator(os, ".");
+              print_identifier(os, e.name.lexeme());
+              os << " ";
+              print_operator(os, "=");
+              os << "\n";
+
+              std::string new_prefix = child_prefix(prefix, is_last);
+              print_indent(os, new_prefix, false);
+              os << termcolor::bright_grey << "object:" << termcolor::reset << "\n";
+              print_expression(os, *e.object, child_prefix(new_prefix, false), true);
+
+              print_indent(os, new_prefix, true);
+              os << termcolor::bright_grey << "value:" << termcolor::reset << "\n";
+              print_expression(os, *e.value, child_prefix(new_prefix, true), true);
             },
-            [](const LetExpr &e) -> std::string {
-              return std::string(e.name.lexeme());
+            [&](const SelfExpr &) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Self");
+              os << " ";
+              print_keyword(os, "self");
+              os << "\n";
             },
-            [this](const Assignment &e) -> std::string {
-              return parenthesize(e.name.lexeme(), *e.value);
-            },
-            [this](const Logical &e) -> std::string {
-              return parenthesize(e.op.lexeme(), *e.left, *e.right);
-            },
-            [this](const Call &e) -> std::string {
-              std::string result = std::format("({}", print_expression(*e.callee));
-              for (const auto &arg : e.arguments) {
-                result += std::format(" {}", print_expression(*arg));
-              }
-              return result + ")";
-            },
-            [this](const FnExpression &e) -> std::string {
-              std::string params;
-              for (const auto &param : e.parameters) {
-                params += std::string(param.lexeme()) + ", ";
-              }
-              return std::format("fn({}) {}", params, print_block(*e.body));
-            },
-            [this](const Get &e) -> std::string {
-              return std::format("({}.{})", print_expression(*e.object), e.name.lexeme());
-            },
-            [this](const Set &e) -> std::string {
-              return std::format("({}.{}) = {}", print_expression(*e.object), e.name.lexeme(), print_expression(*e.value));
-            },
-            [](const SelfExpr &) -> std::string {
-              return "self";
-            },
-            [](const Super &s) -> std::string {
-              return std::format("parent.{}", s.method.lexeme());
+            [&](const Super &s) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Super");
+              os << " ";
+              print_keyword(os, "parent");
+              print_operator(os, ".");
+              print_identifier(os, s.method.lexeme());
+              os << "\n";
             },
         },
         expr);
   }
-  std::string print_block(const BlockStatement &b) const {
-    std::string result = "{\n";
-    for (const auto &decl : b.declarations) {
-      result += print_declaration(decl) + "\n";
+
+  void print_block(std::ostream &os, const BlockStatement &b,
+                   const std::string &prefix, bool is_last) const {
+    print_indent(os, prefix, is_last);
+    print_node(os, "Block");
+    os << "\n";
+
+    std::string new_prefix = child_prefix(prefix, is_last);
+    for (size_t i = 0; i < b.declarations.size(); ++i) {
+      print_declaration(os, b.declarations[i], new_prefix,
+                        i == b.declarations.size() - 1);
     }
-    return result + "}";
   }
 
-  std::string print_statement(const Statement &statement) const {
-    return std::visit(
+  void print_statement(std::ostream &os, const Statement &statement,
+                       const std::string &prefix, bool is_last) const {
+    std::visit(
         overload{
-            [this](const PrintStatement &s) -> std::string {
-              return std::format("print {}", print_expression(*s.expression));
+            [&](const PrintStatement &s) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Print");
+              os << "\n";
+              print_expression(os, *s.expression, child_prefix(prefix, is_last), true);
             },
-            [this](const Expression &e) -> std::string {
-              return print_expression(e);
+            [&](const Expression &e) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "ExprStmt");
+              os << "\n";
+              print_expression(os, e, child_prefix(prefix, is_last), true);
             },
-            [this](const BlockStatement &b) -> std::string {
-              return print_block(b);
+            [&](const BlockStatement &b) {
+              print_block(os, b, prefix, is_last);
             },
-            [this](const IfStatement &i) -> std::string {
-              std::string result =
-                  std::format("if ({}) {}", print_expression(*i.condition),
-                              print_statement(*i.then_branch));
-              if (i.else_branch) {
-                result +=
-                    std::format(" else {}", print_statement(*i.else_branch));
+            [&](const IfStatement &i) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "If");
+              os << "\n";
+
+              std::string new_prefix = child_prefix(prefix, is_last);
+              bool has_else = i.else_branch != nullptr;
+
+              print_indent(os, new_prefix, false);
+              os << termcolor::bright_grey << "condition:" << termcolor::reset << "\n";
+              print_expression(os, *i.condition, child_prefix(new_prefix, false), true);
+
+              print_indent(os, new_prefix, !has_else);
+              os << termcolor::bright_grey << "then:" << termcolor::reset << "\n";
+              print_statement(os, *i.then_branch, child_prefix(new_prefix, !has_else), true);
+
+              if (has_else) {
+                print_indent(os, new_prefix, true);
+                os << termcolor::bright_grey << "else:" << termcolor::reset << "\n";
+                print_statement(os, *i.else_branch, child_prefix(new_prefix, true), true);
               }
-              return result;
             },
-            [this](const WhileStatement &w) -> std::string {
-              return std::format("while ({}) {}",
-                                 print_expression(*w.condition),
-                                 print_statement(*w.body));
+            [&](const WhileStatement &w) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "While");
+              os << "\n";
+
+              std::string new_prefix = child_prefix(prefix, is_last);
+
+              print_indent(os, new_prefix, false);
+              os << termcolor::bright_grey << "condition:" << termcolor::reset << "\n";
+              print_expression(os, *w.condition, child_prefix(new_prefix, false), true);
+
+              print_indent(os, new_prefix, true);
+              os << termcolor::bright_grey << "body:" << termcolor::reset << "\n";
+              print_statement(os, *w.body, child_prefix(new_prefix, true), true);
             },
-            [this](const ForStatement &f) -> std::string {
-              std::string init_str = f.initializer ? print_declaration(*f.initializer) : "";
-              std::string condition_str = f.condition ? print_expression(*f.condition) : "";
-              std::string increment_str = f.increment ? print_expression(*f.increment) : "";
-              return std::format("for ({}; {}; {}) {}", init_str, condition_str, increment_str, print_statement(*f.body));
+            [&](const ForStatement &f) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "For");
+              os << "\n";
+
+              std::string new_prefix = child_prefix(prefix, is_last);
+
+              if (f.initializer) {
+                print_indent(os, new_prefix, false);
+                os << termcolor::bright_grey << "init:" << termcolor::reset << "\n";
+                print_declaration(os, *f.initializer, child_prefix(new_prefix, false), true);
+              }
+
+              if (f.condition) {
+                print_indent(os, new_prefix, false);
+                os << termcolor::bright_grey << "condition:" << termcolor::reset << "\n";
+                print_expression(os, *f.condition, child_prefix(new_prefix, false), true);
+              }
+
+              if (f.increment) {
+                print_indent(os, new_prefix, false);
+                os << termcolor::bright_grey << "increment:" << termcolor::reset << "\n";
+                print_expression(os, *f.increment, child_prefix(new_prefix, false), true);
+              }
+
+              print_indent(os, new_prefix, true);
+              os << termcolor::bright_grey << "body:" << termcolor::reset << "\n";
+              print_statement(os, *f.body, child_prefix(new_prefix, true), true);
             },
-            [this](const ReturnStatement &r) -> std::string {
-               std::string value = r.value ? print_expression(*r.value) : "nil";
-               return std::format("return {}", value);
+            [&](const ReturnStatement &r) {
+              print_indent(os, prefix, is_last);
+              print_node(os, "Return");
+              os << "\n";
+              if (r.value) {
+                print_expression(os, *r.value, child_prefix(prefix, is_last), true);
+              } else {
+                print_indent(os, child_prefix(prefix, is_last), true);
+                os << termcolor::bright_grey << "nil" << termcolor::reset << "\n";
+              }
             },
         },
         statement);
   }
 
-  std::string print_fn_declaration(const FnDeclaration &f) const {
-    std::string params;
-    for (const auto &param : f.parameters) {
-      params += std::string(param.lexeme()) + ", ";
+  void print_fn_declaration(std::ostream &os, const FnDeclaration &f,
+                            const std::string &prefix, bool is_last) const {
+    print_indent(os, prefix, is_last);
+    print_node(os, "FnDecl");
+    os << " ";
+    if (f.is_static) {
+      print_keyword(os, "static");
+      os << " ";
     }
-    return std::format("{}fn {}({}) {}", f.is_static ? "static " : "", f.name.lexeme(), params, print_block(*f.body));
+    print_identifier(os, f.name.lexeme());
+    print_operator(os, "(");
+    for (size_t i = 0; i < f.parameters.size(); ++i) {
+      if (i > 0) os << termcolor::bright_grey << ", " << termcolor::reset;
+      print_identifier(os, f.parameters[i].lexeme());
+    }
+    print_operator(os, ")");
+    os << "\n";
+    print_block(os, *f.body, child_prefix(prefix, is_last), true);
   }
 
-  std::string print_declaration(const Declaration &declaration) const {
-    return std::visit(overload{
-                          [this](const LetDeclaration &d) -> std::string {
-                            return std::format(
-                                "let {}: {}", d.name.lexeme(),
-                                print_expression(*d.initializer));
-                          },
-                          [this](const Statement &s) -> std::string {
-                            return print_statement(s);
-                          },
-                          [this](const FnDeclaration &f) -> std::string {
-                            return print_fn_declaration(f);
-                          },
-                          [this](const StructDeclaration &c) -> std::string {
-                            std::string methods;
-                            for (const auto &method : c.methods) {
-                              methods += std::format("{}", print_fn_declaration(*method));
-                            }
-                            std::string parent = c.parent ? std::format("+ {}", c.parent->name.lexeme()) : "";
-                            return std::format("struct {} {} {{{}\n}}", c.name.lexeme(), parent, methods);
-                          },
-                      },
-                      declaration);
+  void print_declaration(std::ostream &os, const Declaration &declaration,
+                         const std::string &prefix, bool is_last) const {
+    std::visit(overload{
+                   [&](const LetDeclaration &d) {
+                     print_indent(os, prefix, is_last);
+                     print_node(os, "LetDecl");
+                     os << " ";
+                     print_identifier(os, d.name.lexeme());
+                     os << " ";
+                     print_operator(os, "=");
+                     os << "\n";
+                     print_expression(os, *d.initializer, child_prefix(prefix, is_last), true);
+                   },
+                   [&](const Statement &s) {
+                     print_statement(os, s, prefix, is_last);
+                   },
+                   [&](const FnDeclaration &f) {
+                     print_fn_declaration(os, f, prefix, is_last);
+                   },
+                   [&](const StructDeclaration &c) {
+                     print_indent(os, prefix, is_last);
+                     print_node(os, "StructDecl");
+                     os << " ";
+                     print_identifier(os, c.name.lexeme());
+                     if (c.parent) {
+                       os << " ";
+                       print_operator(os, ":");
+                       os << " ";
+                       print_identifier(os, c.parent->name.lexeme());
+                     }
+                     os << "\n";
+
+                     std::string new_prefix = child_prefix(prefix, is_last);
+                     for (size_t i = 0; i < c.methods.size(); ++i) {
+                       print_fn_declaration(os, *c.methods[i], new_prefix,
+                                            i == c.methods.size() - 1);
+                     }
+                   },
+               },
+               declaration);
   }
 };
 

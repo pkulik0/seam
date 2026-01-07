@@ -130,7 +130,7 @@ public:
     parser::Parser parser{filtered_tokens};
     const auto &program = m_programs.emplace_back(parser.parse());
     if (m_options.is_verbose) {
-      std::println("\t{}", m_ast_printer.print(program));
+      m_ast_printer.print(std::cout, program);
     }
 
     m_resolver.resolve(program);
