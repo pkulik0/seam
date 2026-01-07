@@ -134,6 +134,7 @@ struct FunctionDeclaration {
   Token name;
   std::vector<Token> parameters;
   std::unique_ptr<BlockStatement> body;
+  bool is_static = false;
 };
 
 struct ClassDeclaration {
@@ -310,7 +311,7 @@ private:
     for (const auto &param : f.parameters) {
       params += std::string(param.lexeme()) + ", ";
     }
-    return std::format("func {}({}) {}", f.name.lexeme(), params, print_block(*f.body));
+    return std::format("{}func {}({}) {}", f.is_static ? "static " : "", f.name.lexeme(), params, print_block(*f.body));
   }
 
   std::string print_declaration(const Declaration &declaration) const {

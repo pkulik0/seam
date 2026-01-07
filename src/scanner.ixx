@@ -68,7 +68,7 @@ private:
           {"fun", token::Type::FUN},       {"for", token::Type::FOR},
           {"if", token::Type::IF},         {"nil", token::Type::NIL},
           {"or", token::Type::OR},         {"print", token::Type::PRINT},
-          {"return", token::Type::RETURN}, {"super", token::Type::SUPER},
+          {"return", token::Type::RETURN}, {"static", token::Type::STATIC}, {"super", token::Type::SUPER},
           {"this", token::Type::THIS},     {"true", token::Type::TRUE},
           {"var", token::Type::VAR},       {"while", token::Type::WHILE},
   };

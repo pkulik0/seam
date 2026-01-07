@@ -82,13 +82,17 @@ class Interpreter {
     const FunctionDeclaration &m_declaration;
     std::shared_ptr<Environment> m_closure;
     bool m_is_initializer;
+    bool m_is_static;
 
   public:
     SeamFunction(const FunctionDeclaration &declaration,
                  std::shared_ptr<Environment> closure, bool is_initializer)
         : SeamCallable(declaration.parameters.size()),
           m_declaration(declaration), m_closure(closure),
-          m_is_initializer(is_initializer) {}
+          m_is_initializer(is_initializer),
+          m_is_static(declaration.is_static) {}
+
+    bool is_static() const { return m_is_static; }
 
     std::shared_ptr<SeamCallable> bind(std::shared_ptr<SeamInstance> instance) {
       auto env = std::make_shared<Environment>(m_closure);
@@ -163,7 +167,7 @@ class Interpreter {
         return it->second;
       }
       auto opt_method = m_klass->get_method(name);
-      if (opt_method) {
+      if (opt_method && !opt_method.value()->is_static()) {
         return std::static_pointer_cast<SeamCallable>(
             opt_method.value()->bind(shared_from_this()));
       }
@@ -445,12 +449,27 @@ class Interpreter {
             },
             [this](const Get &e) -> std::any {
               std::any object = evaluate(*e.object);
-              if (object.type() != typeid(std::shared_ptr<SeamInstance>)) {
-                throw RuntimeError(e.name, "Only instances have properties.");
+              if (object.type() == typeid(std::shared_ptr<SeamInstance>)) {
+                auto instance =
+                    std::any_cast<std::shared_ptr<SeamInstance>>(object);
+                return instance->get(e.name);
               }
-              auto instance =
-                  std::any_cast<std::shared_ptr<SeamInstance>>(object);
-              return instance->get(e.name);
+
+              if (object.type() == typeid(std::shared_ptr<SeamCallable>)) {
+                auto callable =
+                    std::any_cast<std::shared_ptr<SeamCallable>>(object);
+                auto klass = std::dynamic_pointer_cast<SeamClass>(callable);
+                if (klass) {
+                  auto opt_method = klass->get_method(e.name);
+                  if (opt_method && opt_method.value()->is_static()) {
+                    return std::static_pointer_cast<SeamCallable>(
+                        opt_method.value());
+                  }
+                }
+              }
+
+              throw RuntimeError(e.name,
+                                 "Only instances and classes have properties.");
             },
             [this](const Set &e) -> std::any {
               std::any value = evaluate(*e.value);

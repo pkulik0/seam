@@ -1,0 +1,40 @@
+module;
+
+#include <gtest/gtest.h>
+
+export module seam.tests.fixtures;
+
+import seam.interpreter;
+import seam.resolver;
+import seam.scanner;
+import seam.parser;
+import seam.token;
+
+using namespace seam;
+
+export namespace seam::tests::fixtures {
+
+class Execution : public ::testing::Test {
+protected:
+  interpreter::Interpreter interpreter;
+  resolver::Resolver resolver{interpreter};
+
+  void run(const std::string &source) {
+    scanner::Scanner scanner{source};
+    auto tokens = scanner.scan_tokens();
+
+    std::vector<token::Token> filtered_tokens;
+    for (const auto &token : tokens) {
+      if (token.type() != token::Type::COMMENT) {
+        filtered_tokens.push_back(token);
+      }
+    }
+
+    parser::Parser parser{filtered_tokens};
+    auto program = parser.parse();
+    resolver.resolve(program);
+    interpreter.execute(program);
+  }
+};
+
+} // namespace seam::tests::fixtures

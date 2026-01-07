@@ -58,8 +58,10 @@ find_package(GTest CONFIG REQUIRED)
 include(GoogleTest)
 
 file(GLOB_RECURSE TEST_SOURCES "src/*_test.cxx")
-add_executable(seam_tests ${TEST_SOURCES})
-target_sources(seam_tests PRIVATE FILE_SET CXX_MODULES FILES ${SEAM_MODULES})
+file(GLOB_RECURSE TEST_SOURCES_DEDICATED "tests/*.cxx")
+file(GLOB_RECURSE TEST_SOURCES_MODULES "tests/*.ixx")
+add_executable(seam_tests ${TEST_SOURCES} ${TEST_SOURCES_DEDICATED})
+target_sources(seam_tests PRIVATE FILE_SET CXX_MODULES FILES ${SEAM_MODULES} ${TEST_SOURCES_MODULES})
 target_link_libraries(seam_tests PRIVATE
   GTest::gtest
   GTest::gtest_main

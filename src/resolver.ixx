@@ -42,7 +42,7 @@ private:
 
 class Resolver {
 private:
-  enum class FunctionType { NONE, FUNCTION, METHOD, INITIALIZER };
+  enum class FunctionType { NONE, FUNCTION, METHOD, INITIALIZER, STATIC_METHOD };
   enum class ClassType { NONE, CLASS };
 
   interpreter::Interpreter &m_interpreter;
@@ -144,6 +144,10 @@ private:
                 throw ResolutionError(e.keyword,
                                       "Can't use 'this' outside of a class.");
               }
+              if (m_current_function == FunctionType::STATIC_METHOD) {
+                throw ResolutionError(e.keyword,
+                                      "Can't use 'this' in a static method.");
+              }
               resolve_local(expr_ptr, e.keyword);
             },
         },
@@ -236,18 +240,24 @@ private:
                      declare(d.name);
                      define(d.name);
 
-                     begin_scope();
-                     m_scopes.back()["this"] = true;
-
                      for (const auto &method : d.methods) {
-                       const auto name = method->name.lexeme();
-                       const bool is_initializer = name == "init";
-                       resolve(*method, is_initializer
-                                            ? FunctionType::INITIALIZER
-                                            : FunctionType::METHOD);
-                     }
+                       FunctionType type = FunctionType::METHOD;
+                       if (method->name.lexeme() == "init") {
+                         type = FunctionType::INITIALIZER;
+                       }
+                       if (method->is_static) {
+                         type = FunctionType::STATIC_METHOD;
+                       }
 
-                     end_scope();
+                       if (method->is_static) {
+                         resolve(*method, type);
+                       } else {
+                         begin_scope();
+                         m_scopes.back()["this"] = true;
+                         resolve(*method, type);
+                         end_scope();
+                       }
+                     }
 
                      m_current_class = enclosing_class;
                    },

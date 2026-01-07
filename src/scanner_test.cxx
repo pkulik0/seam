@@ -2,6 +2,7 @@
 
 import seam.scanner;
 import seam.token;
+import seam.error;
 
 using namespace seam;
 
@@ -64,7 +65,7 @@ TEST(Scanner, ScansStringLiterals) {
   EXPECT_EQ(tokens[0].type(), token::Type::STRING);
   EXPECT_EQ(tokens[0].lexeme(), R"("hello world")");
   ASSERT_TRUE(tokens[0].literal().has_value());
-  EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), "hello world");
+  EXPECT_EQ(std::any_cast<std::string>(tokens[0].literal().value()), "hello world");
   EXPECT_EQ(tokens[1].type(), token::Type::END_OF_FILE);
   EXPECT_EQ(tokens[1].lexeme(), "");
 }
@@ -108,10 +109,10 @@ TEST(Scanner, ScansIdentifiers) {
 }
 
 TEST(Scanner, ScansKeywords) {
-  scanner::Scanner scanner{"if else while for"};
+  scanner::Scanner scanner{"if else while for static"};
   auto tokens = scanner.scan_tokens();
 
-  ASSERT_EQ(tokens.size(), 5); // 4 keywords + EOF
+  ASSERT_EQ(tokens.size(), 6); // 5 keywords + EOF
   EXPECT_EQ(tokens[0].type(), token::Type::IF);
   EXPECT_EQ(tokens[0].lexeme(), "if");
   EXPECT_EQ(tokens[1].type(), token::Type::ELSE);
@@ -120,8 +121,10 @@ TEST(Scanner, ScansKeywords) {
   EXPECT_EQ(tokens[2].lexeme(), "while");
   EXPECT_EQ(tokens[3].type(), token::Type::FOR);
   EXPECT_EQ(tokens[3].lexeme(), "for");
-  EXPECT_EQ(tokens[4].type(), token::Type::END_OF_FILE);
-  EXPECT_EQ(tokens[4].lexeme(), "");
+  EXPECT_EQ(tokens[4].type(), token::Type::STATIC);
+  EXPECT_EQ(tokens[4].lexeme(), "static");
+  EXPECT_EQ(tokens[5].type(), token::Type::END_OF_FILE);
+  EXPECT_EQ(tokens[5].lexeme(), "");
 }
 
 TEST(Scanner, ScansLineComments) {
@@ -228,17 +231,17 @@ TEST(Scanner, ScansMixedComments) {
 
 TEST(Scanner, ThrowsOnUnterminatedString) {
   scanner::Scanner scanner{R"("unterminated)"};
-  EXPECT_THROW(scanner.scan_tokens(), scanner::Error);
+  EXPECT_THROW(scanner.scan_tokens(), Error);
 }
 
 TEST(Scanner, ThrowsOnUnterminatedComment) {
   scanner::Scanner scanner{"/* unterminated"};
-  EXPECT_THROW(scanner.scan_tokens(), scanner::Error);
+  EXPECT_THROW(scanner.scan_tokens(), Error);
 }
 
 TEST(Scanner, ThrowsOnUnexpectedCharacter) {
   scanner::Scanner scanner{"@"};
-  EXPECT_THROW(scanner.scan_tokens(), scanner::Error);
+  EXPECT_THROW(scanner.scan_tokens(), Error);
 }
 
 TEST(Scanner, TracksLineAndColumnForSingleLineTokens) {
@@ -364,14 +367,14 @@ TEST(Scanner, VerifiesTokenDataForStringLiterals) {
   EXPECT_EQ(tokens[0].line(), 1);
   EXPECT_EQ(tokens[0].column(), 1);
   ASSERT_TRUE(tokens[0].literal().has_value());
-  EXPECT_EQ(std::any_cast<std::string_view>(tokens[0].literal().value()), "test");
+  EXPECT_EQ(std::any_cast<std::string>(tokens[0].literal().value()), "test");
 
   EXPECT_EQ(tokens[1].type(), token::Type::STRING);
   EXPECT_EQ(tokens[1].lexeme(), R"("hello world")");
   EXPECT_EQ(tokens[1].line(), 1);
   EXPECT_EQ(tokens[1].column(), 8); // After "test" (6 chars) and space
   ASSERT_TRUE(tokens[1].literal().has_value());
-  EXPECT_EQ(std::any_cast<std::string_view>(tokens[1].literal().value()), "hello world");
+  EXPECT_EQ(std::any_cast<std::string>(tokens[1].literal().value()), "hello world");
 }
 
 TEST(Scanner, VerifiesTokenDataForNumberLiterals) {
@@ -515,7 +518,7 @@ TEST(Scanner, VerifiesComplexTokenSequenceData) {
   EXPECT_EQ(tokens[9].line(), 2);
   EXPECT_EQ(tokens[9].column(), 9);
   ASSERT_TRUE(tokens[9].literal().has_value());
-  EXPECT_EQ(std::any_cast<std::string_view>(tokens[9].literal().value()), "big");
+  EXPECT_EQ(std::any_cast<std::string>(tokens[9].literal().value()), "big");
 
   // )
   EXPECT_EQ(tokens[10].type(), token::Type::RIGHT_PAREN);

@@ -164,8 +164,11 @@ private:
 
     std::vector<std::unique_ptr<FunctionDeclaration>> methods;
     while (!check(Type::RIGHT_BRACE) && !is_at_end()) {
+      bool is_static = match(Type::STATIC);
+      auto method = parse_function_declaration();
+      method.is_static = is_static;
       methods.emplace_back(
-          std::make_unique<FunctionDeclaration>(parse_function_declaration()));
+          std::make_unique<FunctionDeclaration>(std::move(method)));
     }
 
     consume(Type::RIGHT_BRACE, "Expected '}' after class body.");

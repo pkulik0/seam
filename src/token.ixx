@@ -57,6 +57,7 @@ enum class Type {
   OR,
   PRINT,
   RETURN,
+  STATIC,
   SUPER,
   THIS,
   TRUE,
